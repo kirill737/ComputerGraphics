@@ -20,8 +20,8 @@ namespace CGLib {
 		void GivePlayerControll() { isUnderPlayerControl_ = true; };
 		void TakePlayerControll() { isUnderPlayerControl_ = false; }; // Вроде не понадобится
 
-		float GetX() const { return posX_; };
-		float GetY() const { return posY_; };
+		float GetX() const { return pos_.x; };
+		float GetY() const { return pos_.y; };
 		float GetHeight() const { return height_; };
 		float GetWidth() const { return width_; };
 		float GetSpeed() const { return speed_; };

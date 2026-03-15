@@ -86,7 +86,7 @@ namespace CGLib {
 		if (FAILED(device->CreateBuffer(&cbDesc, nullptr, &transformBuffer_)))
 			return false;
 
-		racketBox_.Center = DirectX::XMFLOAT3(posX_, posY_, 0.0f);
+		racketBox_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
 		racketBox_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
 
 		return true;
@@ -113,14 +113,14 @@ namespace CGLib {
 	void RacketComponent::Update(float deltaTime)
 	{
 		if (isUnderPlayerControl_) {
-			if ((GetAsyncKeyState('W') & 0x8000) && (posY_ + height_ / 2.0f < 1.0f)) {
-				posY_ += speed_ * deltaTime;
+			if ((GetAsyncKeyState('W') & 0x8000) && (pos_.y + height_ / 2.0f < 1.0f)) {
+				pos_.y += speed_ * deltaTime;
 			}
 
-			if ((GetAsyncKeyState('S') & 0x8000) && (posY_ - height_ / 2.0f > -1.0f))
-				posY_ -= speed_ * deltaTime;
+			if ((GetAsyncKeyState('S') & 0x8000) && (pos_.y - height_ / 2.0f > -1.0f))
+				pos_.y -= speed_ * deltaTime;
 
-			racketBox_.Center = DirectX::XMFLOAT3(posX_, posY_, 0.0f);
+			racketBox_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
 			racketBox_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
 		}
 

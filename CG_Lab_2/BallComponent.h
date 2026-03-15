@@ -30,7 +30,7 @@ namespace CGLib {
 		short GetPlayerScore() const { return playerScore; };
 		short GetCompScore() const { return compScore; };
 		void ShowScore() const { std::cout << playerScore << "  |  " << compScore << std::endl; };
-		void RespawnBall() { posX_ = 0.0f; posY_ = 0.0f; };
+		void RespawnBall() { pos_ = DirectX::SimpleMath::Vector2(0.0f, 0.0f); };
 
 
 	private:
@@ -52,8 +52,9 @@ namespace CGLib {
 
 		float width_ = PXL;
 		float height_ = 2.0f * PXL;
-		float speedX_ = 1.5f; //TODO: Подобрать скорость шарика
-		float speedY_ = 3.0f;
+		//float speedX_ = 1.5f; //TODO: Подобрать скорость шарика
+		//float speedY_ = 3.0f;
+		DirectX::SimpleMath::Vector2 speed_{ 1.5f, 3.0f };
 
 		float minYSpeed = 0.3f;
 		DirectX::BoundingBox ballBox;

@@ -109,11 +109,11 @@ namespace CGLib {
 	void BallComponent::Update(float deltaTime)
 	{
 		// Двигаем мяч
-		posX_ += speedX_ * deltaTime;
-		posY_ += speedY_ * deltaTime;
+		pos_.x += speed_.x * deltaTime;
+		pos_.y += speed_.y * deltaTime;
 
 		// Обновляем BoundingBox мяча
-		ballBox.Center = DirectX::XMFLOAT3(posX_, posY_, 0.0f);
+		ballBox.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
 		ballBox.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
 
 		// Проверяем коллизию с ракетками
@@ -121,22 +121,22 @@ namespace CGLib {
 			if (auto racket = weakRacket.lock()) {
 				auto racketBox = racket->GetCollisionBox();
 				if (racketBox.Intersects(ballBox)) {
-					speedX_ = -speedX_;
-					float hitPos = (posY_ - racket->GetY()) / (racket->GetHeight() / 2.0f);
-					speedY_ = hitPos * speedY_;
+					speed_.x = -speed_.x;
+					float hitPos = (pos_.y - racket->GetY()) / (racket->GetHeight() / 2.0f);
+					speed_.y = hitPos * speed_.y;
 					
 					// Чтобы мяч не застривал в ракетке
-					if (posX_ < 0)
-						posX_ = racket->GetX() + racket->GetWidth() / 2.0f + width_ / 2.0f;
+					if (pos_.x < 0)
+						pos_.x = racket->GetX() + racket->GetWidth() / 2.0f + width_ / 2.0f;
 					else
-						posX_ = racket->GetX() - racket->GetWidth() / 2.0f - width_ / 2.0f;
+						pos_.x = racket->GetX() - racket->GetWidth() / 2.0f - width_ / 2.0f;
 
 					// Чтобы не залипала вертикальная скорость
-					if (speedY_ > 0 || abs(speedY_) < minYSpeed)
-						speedY_ = minYSpeed + racket->GetSpeed();
-					if (speedY_ < 0 || abs(speedY_) < minYSpeed)
-						speedY_ = - minYSpeed + racket->GetSpeed();
-					std::cout << "X: " << speedX_ << " | Y: " << speedY_ << std::endl;
+					if (speed_.y > 0 || abs(speed_.y) < minYSpeed)
+						speed_.y = minYSpeed + racket->GetSpeed();
+					if (speed_.y < 0 || abs(speed_.y) < minYSpeed)
+						speed_.y = - minYSpeed + racket->GetSpeed();
+					std::cout << "X: " << speed_.x << " | Y: " << speed_.y << std::endl;
 
 				}
 					// TODO: добавить смещение по Y, зависящее от точки попадания
@@ -145,20 +145,20 @@ namespace CGLib {
 		}
 
 		// Проверка границ экрана
-		if (posY_ + height_ / 2 > 1.0f || posY_ - height_ / 2 < -1.0f) {
-			speedY_ = -speedY_; // отскок от верхней/нижней границы
+		if (pos_.y + height_ / 2 > 1.0f || pos_.y - height_ / 2 < -1.0f) {
+			speed_.y = -speed_.y; // отскок от верхней/нижней границы
 		}
 		// Левая стенка
-		if (posX_ - width_ / 2 < -1.0f) {
-			speedX_ = -speedX_;
+		if (pos_.x - width_ / 2 < -1.0f) {
+			speed_.x = -speed_.x;
 
 			RespawnBall();
 			AddCompScore();
 			ShowScore();
 		}
 		// Правая стенка
-		if (posX_ + width_ / 2 > 1.0f) {
-			speedX_ = -speedX_;
+		if (pos_.x + width_ / 2 > 1.0f) {
+			speed_.x = -speed_.x;
 			
 			RespawnBall();
 			AddPlayerScore();

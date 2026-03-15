@@ -34,9 +34,8 @@ namespace CGLib {
         bool InitializeTransform(ID3D11Device* device);
         void SendTransform(ID3D11DeviceContext* context);
 
-        void SetPos(const float& posX, const float& posY) {
-            posX_ = posX;
-            posY_ = posY;
+        void SetPos(const DirectX::SimpleMath::Vector2& pos) {
+            pos_ = pos;
         };
 
     protected:
@@ -47,16 +46,16 @@ namespace CGLib {
 		DirectX::XMFLOAT2 size_ = { 1.0f, 1.0f };*/
 
 
-		float posX_ = 0.0;
-		float posY_ = 0.0;
-        DirectX::SimpleMath::Vector2 pos;
+		/*float posX_ = 0.0;
+		float posY_ = 0.0;*/
+        DirectX::SimpleMath::Vector2 pos_{ 0.0f, 0.0f };
 
         Microsoft::WRL::ComPtr<ID3D11Buffer> transformBuffer_;
         DirectX::XMMATRIX worldMatrix_ = DirectX::XMMatrixIdentity(); // Матрица трансормаций
 
 		void UpdateWorldMatrix()
 		{
-			worldMatrix_ = DirectX::XMMatrixTranslation(posX_, posY_, 0.0f);
+			worldMatrix_ = DirectX::XMMatrixTranslation(pos_.x, pos_.y, 0.0f);
 		}
 
         
