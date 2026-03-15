@@ -44,12 +44,12 @@ namespace game {
 
 		auto playerRacket = std::make_shared<CGLib::RacketComponent>();
 		playerRacket->GivePlayerControll();
-		playerRacket->SetPos(-0.9f, 0.0f);
+		playerRacket->SetPos(DirectX::SimpleMath::Vector2(-0.9f, 0.0f));
 		if (!playerRacket->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 			return false;
 
 		auto compRacket = std::make_shared<CGLib::RacketComponent>();
-		compRacket->SetPos(0.9f, 0.0f);
+		compRacket->SetPos(DirectX::SimpleMath::Vector2(0.9f, 0.0f));
 		if (!compRacket->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 			return false;
 
@@ -59,7 +59,7 @@ namespace game {
 
 		// ћ€ч
 		auto ball = std::make_shared<CGLib::BallComponent>();
-		ball->SetPos(0.0f, 0.0f);
+		ball->SetPos(DirectX::SimpleMath::Vector2(0.0f, 0.0f));
 
 		// ѕередаем в м€ч weak_ptr на ракетки
 		ball->AddRacket(playerRacket);
