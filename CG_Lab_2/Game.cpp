@@ -1,3 +1,5 @@
+#define NOMINMAX 1
+
 #include "Game.h"
 #include "TriangleComponent.h"
 #include "RacketComponent.h"
@@ -6,6 +8,7 @@
 #include <dxgi.h>
 #include <chrono>
 #include <iostream>
+
 #include <windows.h>
 #include <WinUser.h>
 #include <wrl.h>
@@ -35,21 +38,21 @@ namespace game {
 
         if (!InitializeDirect3D()) return false;
 
-        /*auto triangle = std::make_unique<TriangleComponent>();
+        auto triangle = std::make_shared<TriangleComponent>();
         if (!triangle->Initialize(device_.Get(), context_.Get(), display_.GetHwnd())) {
             return false;
         }
-        components_.push_back(std::move(triangle));*/
+        components_.push_back(triangle);
 
 
 		auto playerRacket = std::make_shared<CGLib::RacketComponent>();
-		playerRacket->GivePlayerControll();
-		playerRacket->SetPos(DirectX::SimpleMath::Vector2(-0.9f, 0.0f));
+		playerRacket->GivePlayerControll(&input_);
+        playerRacket->SetPos(DirectX::SimpleMath::Vector2{ -0.9f, 0.0f });
 		if (!playerRacket->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 			return false;
 
 		auto compRacket = std::make_shared<CGLib::RacketComponent>();
-		compRacket->SetPos(DirectX::SimpleMath::Vector2(0.9f, 0.0f));
+        compRacket->SetPos(DirectX::SimpleMath::Vector2{ 0.9f, 0.0f });
 		if (!compRacket->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 			return false;
 
@@ -59,7 +62,7 @@ namespace game {
 
 		// ћ€ч
 		auto ball = std::make_shared<CGLib::BallComponent>();
-		ball->SetPos(DirectX::SimpleMath::Vector2(0.0f, 0.0f));
+        ball->SetPos(DirectX::SimpleMath::Vector2{ 0.0f, 0.0f });
 
 		// ѕередаем в м€ч weak_ptr на ракетки
 		ball->AddRacket(playerRacket);
@@ -68,6 +71,8 @@ namespace game {
 			return false;
 
 		components_.push_back(ball);
+
+        compRacket->SetBall(ball);
 
         return true;
     }
@@ -123,24 +128,6 @@ namespace game {
         }
     }
 
-  //  void Game::RenderFrame()
-  //  {
-  //      //float color[] = { totalTime_, 0.1f, 0.1f, 1.0f };
-		//float red = (sinf(totalTime_) + 1.0f) * 0.5f;
-		//float color[] = { red, 0.0f, 0.0f, 1.0f };
-  //      context_->ClearState();
-  //      context_->ClearRenderTargetView(renderTargetView_.Get(), color);
-
-  //      D3D11_VIEWPORT vp = { 0, 0, static_cast<float>(screenWidth_),
-  //                           static_cast<float>(screenHeight_), 0.0f, 1.0f };
-  //      context_->RSSetViewports(1, &vp);
-  //      context_->OMSetRenderTargets(1, renderTargetView_.GetAddressOf(), nullptr);
-
-  //      for (auto& comp : components_) comp->Render(context_.Get());
-
-  //      swapChain_->Present(1, 0);
-  //  }
-
 	void Game::RenderFrame()
 	{
 		float black[] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -174,7 +161,7 @@ namespace game {
             swprintf_s(title, L"My3DApp - FPS: %.1f", fps);
             SetWindowText(display_.GetHwnd(), title);
 
-            totalTime_ = 0.0f; // CHECK
+            totalTime_ = 0.0f;
             frameCount_ = 0;
         }
     }

@@ -1,4 +1,5 @@
 #include "RacketComponent.h"
+#include "BallComponent.h"
 #include <d3dcompiler.h>
 #include <iostream>
 
@@ -73,7 +74,7 @@ namespace CGLib {
 		// === Rasterizer State ===
 		CD3D11_RASTERIZER_DESC rsDesc(D3D11_DEFAULT);
 		rsDesc.CullMode = D3D11_CULL_NONE;
-		rsDesc.FillMode = D3D11_FILL_WIREFRAME; // Если нужны рамка
+		//rsDesc.FillMode = D3D11_FILL_WIREFRAME; // Если нужны рамка
 		if (FAILED(device->CreateRasterizerState(&rsDesc, &rasterizerState_))) return false;
 
 		// Создаём буфер для перемещения ракетки
@@ -113,17 +114,25 @@ namespace CGLib {
 	void RacketComponent::Update(float deltaTime)
 	{
 		if (isUnderPlayerControl_) {
-			if ((GetAsyncKeyState('W') & 0x8000) && (pos_.y + height_ / 2.0f < 1.0f)) {
+			// Проверяем состояние клавиш через InputDevice
+			if (input_ && input_->IsKeyPressed('W') && (pos_.y + height_ / 2.0f < 1.0f)) {
 				pos_.y += speed_ * deltaTime;
 			}
 
-			if ((GetAsyncKeyState('S') & 0x8000) && (pos_.y - height_ / 2.0f > -1.0f))
+			if (input_ && input_->IsKeyPressed('S') && (pos_.y - height_ / 2.0f > -1.0f)) {
 				pos_.y -= speed_ * deltaTime;
-
-			racketBox_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
-			racketBox_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
+			}
 		}
+		else {
+			float ballY = ball_.lock()->GetY();
 
+			if (ballY > pos_.y)
+				pos_.y += speed_ * deltaTime;
+			else if (ballY < pos_.y)
+				pos_.y -= speed_ * deltaTime;
+		}
+		racketBox_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
+		racketBox_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
 		UpdateWorldMatrix();
 	}
 

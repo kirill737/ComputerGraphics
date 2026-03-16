@@ -1,10 +1,12 @@
 #pragma once
+#define NOMINMAX 1
 
 #include "GameComponent.h"
 #include "RacketComponent.h"
 #include "BallComponent.h"
 #include "DisplayWin32.h"
 #include "InputDevice.h"
+
 
 #include <windows.h>
 #include <d3d11.h>
@@ -29,12 +31,6 @@ namespace game {
         void Run();
         void Shutdown();
 
-		//void AddComponent(std::unique_ptr<CGLib::GameComponent> component);
-
-        /*float getHPxl() { return  }
-        int getScreenWidth() { return screenWidth_; };
-        int getScreenHeigth() { return screenHeight_; };*/
-
     private:
         bool InitializeDirect3D();
         void RenderFrame();
@@ -52,11 +48,6 @@ namespace game {
 
         int screenWidth_ = 800;
         int screenHeight_ = 400;
-
-        // Game objects
-		/*CGLib::RacketComponent playerRacket;
-		CGLib::RacketComponent computRacket;
-		CGLib::BallComponent ball;*/
 
         // FPS counter
         float totalTime_ = 0.0f;

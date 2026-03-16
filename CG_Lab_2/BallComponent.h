@@ -1,7 +1,6 @@
 #pragma once
 
 #include "GameComponent.h"
-#include "RacketComponent.h"
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include <wrl.h>
@@ -10,7 +9,9 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <random>
 
+namespace CGLib { class RacketComponent; }
 namespace CGLib {
 
 	class BallComponent : public GameComponent
@@ -24,14 +25,25 @@ namespace CGLib {
 
 		// ќтскоки м€ча будут провер€тьс€ только со св€занными с ним ракетками
 		void AddRacket(std::shared_ptr<RacketComponent> racket);
+		float GetX() const { return pos_.x; };
+		float GetY() const { return pos_.y; };
 
 		void AddPlayerScore() { playerScore++; };
 		void AddCompScore() { compScore++; };
 		short GetPlayerScore() const { return playerScore; };
 		short GetCompScore() const { return compScore; };
 		void ShowScore() const { std::cout << playerScore << "  |  " << compScore << std::endl; };
-		void RespawnBall() { pos_ = DirectX::SimpleMath::Vector2(0.0f, 0.0f); };
+		void RespawnBall() {
+			pos_ = DirectX::SimpleMath::Vector2{ 0.0f, 0.0f };
+			speed_ = DirectX::SimpleMath::Vector2{ 1.5f, 0.0f };
+		};
 
+		float RandomFloat(float min, float max) {
+			static std::random_device rd;
+			static std::mt19937 gen(rd());
+			std::uniform_real_distribution<float> dist(min, max);
+			return dist(gen);
+		}
 
 	private:
 
@@ -43,20 +55,21 @@ namespace CGLib {
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout_;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState_;
 
-		//ID3D11DeviceContext* context_ = nullptr;
+
 		UINT stride_ = 32; // —колько байт занимает одна вершина
 		UINT offset_ = 0;
 		UINT indexCount_ = 6;
 
+
 		// ѕараметры дл€ перемещени€
-
-		float width_ = PXL;
-		float height_ = 2.0f * PXL;
-		//float speedX_ = 1.5f; //TODO: ѕодобрать скорость шарика
+		const float width_ = PXL;
+		const float height_ = 2.0f * PXL;
+		//float speedX_ = 1.5f; // TODO: ѕодобрать скорость шарика
 		//float speedY_ = 3.0f;
-		DirectX::SimpleMath::Vector2 speed_{ 1.5f, 3.0f };
+		const float SpeedIncrement = 0.05f;
+		DirectX::SimpleMath::Vector2 speed_{ 1.5f, 1.5f };
 
-		float minYSpeed = 0.3f;
+		//const float minYSpeed = 0.3f;
 		DirectX::BoundingBox ballBox;
 
 		std::vector<std::weak_ptr<RacketComponent>> rackets_;
@@ -65,12 +78,6 @@ namespace CGLib {
 		unsigned short playerScore = 0;
 		unsigned short compScore = 0;
 
-
-
-
-
-		/*void Up();
-		void Down();*/
 	};
 
 }

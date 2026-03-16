@@ -5,6 +5,10 @@
 #include <DirectXMath.h>
 #include <wrl.h>
 #include <DirectXCollision.h>
+#include <memory>
+#include "InputDevice.h"
+
+namespace CGLib { class BallComponent; }
 
 namespace CGLib {
 
@@ -17,14 +21,15 @@ namespace CGLib {
 		void Update(float deltaTime) override;
 		void Shutdown() override;
 
-		void GivePlayerControll() { isUnderPlayerControl_ = true; };
-		void TakePlayerControll() { isUnderPlayerControl_ = false; }; // Вроде не понадобится
+		void GivePlayerControll(InputDevice* input) { isUnderPlayerControl_ = true; input_ = input; };
 
 		float GetX() const { return pos_.x; };
 		float GetY() const { return pos_.y; };
 		float GetHeight() const { return height_; };
 		float GetWidth() const { return width_; };
 		float GetSpeed() const { return speed_; };
+
+		void SetBall(std::weak_ptr<BallComponent> ball) { ball_ = ball; }
 
 
 		DirectX::BoundingBox GetCollisionBox() const { return racketBox_; };
@@ -40,6 +45,8 @@ namespace CGLib {
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout_;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState_;
 
+		InputDevice* input_;
+
 		//ID3D11DeviceContext* context_ = nullptr;
 		UINT stride_ = 32; // Сколько байт занимает одна вершина
 		UINT offset_ = 0;
@@ -53,7 +60,9 @@ namespace CGLib {
 
 		DirectX::BoundingBox racketBox_;
 
+		// Для ИИ
 		bool isUnderPlayerControl_ = false;
+		std::weak_ptr<BallComponent> ball_;
 
 		
 		
