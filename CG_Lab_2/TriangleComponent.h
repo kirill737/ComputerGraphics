@@ -15,9 +15,6 @@ namespace CGLib {
         void Shutdown() override;
 
     private:
-		/*bool CompileShader(const wchar_t* filename, const char* entryPoint,
-			const char* target, ID3DBlob** blob, D3D_SHADER_MACRO* macros = nullptr);*/
-
         Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer_;
         Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer_;
         Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader_;
