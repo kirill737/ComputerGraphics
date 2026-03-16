@@ -2,12 +2,12 @@
 #include <d3dcompiler.h>
 #include <iostream>
 
+
 namespace CGLib {
     bool TriangleComponent::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd)
     {
         context_ = context;
 
-        // === ?????????? ???????? ===
         ID3DBlob* vsBlob = nullptr;
         if (!CompileShader(L"./Shaders/MyVeryFirstShader.hlsl", "VSMain", "vs_5_0", &vsBlob, nullptr)) return false;
 
@@ -37,10 +37,10 @@ namespace CGLib {
         vsBlob->Release(); psBlob->Release();
 
         DirectX::XMFLOAT4 vertices[] = {
-            { 0.5f,  0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f },
-            { -0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f },
-            { 0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f },
-            { -0.5f, 0.5f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.01f,  0.9f, 0.0f, 1.0f }, { 0.8f, 0.8f, 0.8f, 1.0f },
+            { -0.01f, -0.91f, 0.0f, 1.0f }, { 0.8f, 0.8f, 0.8f, 1.0f },
+            { 0.01f, -0.9f, 0.0f, 1.0f }, { 0.8f, 0.8f, 0.8f, 1.0f },
+            { -0.01f, 0.9f, 0.0f, 1.0f }, { 0.8f, 0.8f, 0.8f, 1.0f },
         };
 
         D3D11_BUFFER_DESC vbDesc = {};
@@ -67,6 +67,14 @@ namespace CGLib {
         //rsDesc.FillMode = D3D11_FILL_WIREFRAME; // Если нужна рамка
         if (FAILED(device->CreateRasterizerState(&rsDesc, &rasterizerState_))) return false;
 
+
+		D3D11_BUFFER_DESC cbDesc = {};
+		cbDesc.ByteWidth = sizeof(DirectX::XMMATRIX);
+		cbDesc.Usage = D3D11_USAGE_DEFAULT;
+		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		if (FAILED(device->CreateBuffer(&cbDesc, nullptr, &transformBuffer_)))
+			return false;
+
         return true;
     }
 
@@ -79,6 +87,8 @@ namespace CGLib {
         context->IASetVertexBuffers(0, 1, vertexBuffer_.GetAddressOf(), &stride_, &offset_);
         context->VSSetShader(vertexShader_.Get(), nullptr, 0);
         context->PSSetShader(pixelShader_.Get(), nullptr, 0);
+
+        SendTransform(context);
 
         context->DrawIndexed(indexCount_, 0, 0);
     }

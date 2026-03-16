@@ -21,6 +21,7 @@ namespace CGLib {
         Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader_;
         Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout_;
         Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState_;
+	
 
         UINT stride_ = 32;
         UINT offset_ = 0;
