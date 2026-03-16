@@ -120,7 +120,6 @@ namespace CGLib {
         }
 
         if (s_instance_) {
-            // InputDevice ?????????? ?? Game, ????? ????????
             return s_instance_->WndProc(hwnd, message, wParam, lParam, s_instance_->inputDevice_);
         }
         return DefWindowProc(hwnd, message, wParam, lParam);

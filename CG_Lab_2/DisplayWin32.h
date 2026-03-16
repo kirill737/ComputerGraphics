@@ -1,5 +1,6 @@
 #pragma once
 
+#define NOMINMAX 1
 #include <windows.h>
 #include <WinUser.h>
 #include <wrl.h>
