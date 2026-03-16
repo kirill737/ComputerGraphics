@@ -63,12 +63,6 @@ namespace CGLib {
 		// Äëÿ ÈÈ
 		bool isUnderPlayerControl_ = false;
 		std::weak_ptr<BallComponent> ball_;
-
-		
-		
-
-		/*void Up();
-		void Down();*/
 	};
 
 }

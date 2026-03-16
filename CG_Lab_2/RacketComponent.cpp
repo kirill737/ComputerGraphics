@@ -4,12 +4,10 @@
 #include <iostream>
 
 namespace CGLib {
-
 	bool RacketComponent::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd)
 	{
 		context_ = context;
 
-		// === ?????????? ???????? ===
 		ID3DBlob* vsBlob = nullptr;
 		if (!CompileShader(L"./Shaders/MyVeryFirstShader.hlsl", "VSMain", "vs_5_0", &vsBlob, nullptr)) return false;
 
@@ -39,7 +37,6 @@ namespace CGLib {
 		}
 		vsBlob->Release(); psBlob->Release();
 
-		// === Vert datas ===
 		float halfWidth = width_ / 2.0f;
 		float halfHeight = height_ / 2.0f;
 
@@ -60,7 +57,6 @@ namespace CGLib {
 		D3D11_SUBRESOURCE_DATA vbData = { vertices, 0, 0 };
 		if (FAILED(device->CreateBuffer(&vbDesc, &vbData, &vertexBuffer_))) return false;
 
-		// === Indicies init ===
 		//UINT indices[] = { 0,1,2};
 		UINT indices[] = { 0,1,2, 1,0,3 };
 		D3D11_BUFFER_DESC ibDesc = {};
