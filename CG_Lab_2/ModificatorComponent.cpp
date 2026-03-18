@@ -1,10 +1,10 @@
-#include "RacketComponent.h"
-#include "BallComponent.h"
+#include "ModificatorComponent.h"
 #include <d3dcompiler.h>
 #include <iostream>
+#include "InputDevice.h"
 
 namespace CGLib {
-	bool RacketComponent::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd)
+	bool ModificatorComponent::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd)
 	{
 		context_ = context;
 
@@ -40,8 +40,8 @@ namespace CGLib {
 		float halfWidth = width_ / 2.0f;
 		float halfHeight = height_ / 2.0f;
 
-		// TODO: Íà÷àëüíûå êîðäû ÷åðåç èíèöèàëèçàöèþ?
-		// { x, y, z (ãëóáèíà?), íîðìàëü }, { R, G, B, A } 
+		// TODO: ÐÐ°Ñ‡Ð°Ð»ÑŒÐ½Ñ‹Ðµ ÐºÐ¾Ñ€Ð´Ñ‹ Ñ‡ÐµÑ€ÐµÐ· Ð¸Ð½Ð¸Ñ†Ð¸Ð°Ð»Ð¸Ð·Ð°Ñ†Ð¸ÑŽ?
+		// { x, y, z (Ð³Ð»ÑƒÐ±Ð¸Ð½Ð°?), Ð½Ð¾Ñ€Ð¼Ð°Ð»ÑŒ }, { R, G, B, A } 
 		DirectX::XMFLOAT4 vertices[] = {
 			{ halfWidth,  halfHeight,  0.5f, 1.0f }, { 1,1,1,1 },
 			{ -halfWidth, -halfHeight, 0.5f, 1.0f }, { 1,1,1,1 },
@@ -69,10 +69,10 @@ namespace CGLib {
 
 		CD3D11_RASTERIZER_DESC rsDesc(D3D11_DEFAULT);
 		rsDesc.CullMode = D3D11_CULL_NONE;
-		//rsDesc.FillMode = D3D11_FILL_WIREFRAME; // Åñëè íóæíû ðàìêà
+		//rsDesc.FillMode = D3D11_FILL_WIREFRAME; // Ð•ÑÐ»Ð¸ Ð½ÑƒÐ¶Ð½Ñ‹ Ñ€Ð°Ð¼ÐºÐ°
 		if (FAILED(device->CreateRasterizerState(&rsDesc, &rasterizerState_))) return false;
 
-		// Ñîçäà¸ì áóôåð äëÿ ïåðåìåùåíèÿ ðàêåòêè
+		// Ð¡Ð¾Ð·Ð´Ð°Ñ‘Ð¼ Ð±ÑƒÑ„ÐµÑ€ Ð´Ð»Ñ Ð¿ÐµÑ€ÐµÐ¼ÐµÑ‰ÐµÐ½Ð¸Ñ Ñ€Ð°ÐºÐµÑ‚ÐºÐ¸
 
 		D3D11_BUFFER_DESC cbDesc = {};
 		cbDesc.ByteWidth = sizeof(DirectX::XMMATRIX);
@@ -82,13 +82,13 @@ namespace CGLib {
 		if (FAILED(device->CreateBuffer(&cbDesc, nullptr, &transformBuffer_)))
 			return false;
 
-		racketBox_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
-		racketBox_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
+		box_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
+		box_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
 
 		return true;
 	}
 
-	void RacketComponent::Render(ID3D11DeviceContext* context)
+	void ModificatorComponent::Render(ID3D11DeviceContext* context)
 	{
 		context->RSSetState(rasterizerState_.Get());
 		context->IASetInputLayout(inputLayout_.Get());
@@ -99,64 +99,22 @@ namespace CGLib {
 		context->PSSetShader(pixelShader_.Get(), nullptr, 0);
 
 
-		// Ïåðåäà¸ì ìàòðèöó â øåéäåð
+		// ÐŸÐµÑ€ÐµÐ´Ð°Ñ‘Ð¼ Ð¼Ð°Ñ‚Ñ€Ð¸Ñ†Ñƒ Ð² ÑˆÐµÐ¹Ð´ÐµÑ€
 		SendTransform(context);
 
 		context->DrawIndexed(indexCount_, 0, 0);
 	}
 
 
-	void RacketComponent::Update(float deltaTime)
+	void ModificatorComponent::Update(float deltaTime)
 	{
-		if (isUnderPlayerControl_) {
-			// Ïðîâåðÿåì ñîñòîÿíèå êëàâèø ÷åðåç InputDevice
-			if (input_ && input_->IsKeyPressed('W') && (pos_.y + height_ / 2.0f < 1.0f)) {
-				pos_.y += speed_ * deltaTime;
-			}
-
-			if (input_ && input_->IsKeyPressed('S') && (pos_.y - height_ / 2.0f > -1.0f)) {
-				pos_.y -= speed_ * deltaTime;
-			}
-
-			if (input_ && input_->IsKeyPressed('D') && (pos_.x + width_ / 2.0f < 0.0f)) {
-				pos_.x += speed_ * deltaTime;
-			}
-
-			if (input_ && input_->IsKeyPressed('A') && (pos_.x - width_ / 2.0f > -1.0f)) {
-				pos_.x -= speed_ * deltaTime;
-			}
-		}
-		else {
-			/*float ballY = ball_.lock()->GetY();
-
-			if (ballY > pos_.y)
-				pos_.y += speed_ * deltaTime;
-			else if (ballY < pos_.y)
-				pos_.y -= speed_ * deltaTime;*/
-			reactionTimer_ += deltaTime;
-
-			if (reactionTimer_ >= reactionDelay_) {
-				reactionTimer_ = 0.0f;
-				targetY_ = ball_.lock()->GetY();
-			}
-
-			float diff = targetY_ - pos_.y;
-
-			if (abs(diff) > 0.01f)
-			{
-				if (diff > 0)
-					pos_.y += speed_ * deltaTime;
-				else
-					pos_.y -= speed_ * deltaTime;
-			}
-		}
-		racketBox_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
-		racketBox_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
+		box_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
+		box_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
 		UpdateWorldMatrix();
 	}
 
 
-	void RacketComponent::Shutdown()
+	void ModificatorComponent::Shutdown()
 	{
 		vertexBuffer_.Reset();
 		indexBuffer_.Reset();

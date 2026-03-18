@@ -154,7 +154,7 @@ namespace CGLib {
 						pos_.x = racket->GetX() - racket->GetWidth() / 2.0f - width_ / 2.0f;
 
 
-					std::cout << "X: " << speed_.x << " | Y: " << speed_.y << std::endl;
+					//std::cout << "X: " << speed_.x << " | Y: " << speed_.y << std::endl;
 
 				}
 				

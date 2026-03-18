@@ -6,6 +6,7 @@
 #include "BallComponent.h"
 #include "DisplayWin32.h"
 #include "InputDevice.h"
+#include "Spawner.h"
 
 
 #include <windows.h>
@@ -32,6 +33,8 @@ namespace game {
         void Shutdown();
 
     private:
+        Spawner spawner;
+
         bool InitializeDirect3D();
         void RenderFrame();
         void UpdateFPS(float deltaTime);

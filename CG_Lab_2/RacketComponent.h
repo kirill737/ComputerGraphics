@@ -45,7 +45,7 @@ namespace CGLib {
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout_;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState_;
 
-		InputDevice* input_;
+		InputDevice* input_ = nullptr;
 
 		//ID3D11DeviceContext* context_ = nullptr;
 		UINT stride_ = 32; // Сколько байт занимает одна вершина
@@ -57,6 +57,10 @@ namespace CGLib {
 		float width_ = PXL;
 		float height_ = 2.0f * PXL * 7.0f;
 		float speed_ = 1.5f;
+
+		float reactionTimer_ = 0.0f;
+		float reactionDelay_ = 0.4f;   // задержка реакции
+		float targetY_ = 0.0f;          // куда двигаться
 
 		DirectX::BoundingBox racketBox_;
 

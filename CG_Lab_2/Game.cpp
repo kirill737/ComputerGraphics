@@ -44,6 +44,8 @@ namespace game {
         }
         components_.push_back(triangle);
 
+        // Создаём спавнер
+        spawner.Initialize(device_.Get(), context_.Get(), display_.GetHwnd());
 
 		auto playerRacket = std::make_shared<CGLib::RacketComponent>();
 		playerRacket->GivePlayerControll(&input_);
@@ -74,6 +76,8 @@ namespace game {
 
         compRacket->SetBall(ball);
 
+        spawner.AddRacket(playerRacket);
+
         return true;
     }
 
@@ -95,7 +99,7 @@ namespace game {
 
         HRESULT res = D3D11CreateDeviceAndSwapChain(
             nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
-            D3D11_CREATE_DEVICE_DEBUG, &featureLevel, 1,
+            0, &featureLevel, 1,
             D3D11_SDK_VERSION, &swapDesc, &swapChain_, &device_, nullptr, &context_);
 
         if (FAILED(res)) { std::cerr << "D3D11CreateDeviceAndSwapChain failed: " << res << std::endl; return false; }
@@ -145,15 +149,16 @@ namespace game {
 
 		for (auto& comp : components_) comp->Render(context_.Get());
 
+
 		swapChain_->Present(1, 0);
 	}
-
-
 
     void Game::UpdateFPS(float deltaTime)
     {
         totalTime_ += deltaTime;
         frameCount_++;
+
+        spawner.UpdateTimer(deltaTime);
 
         if (totalTime_ >= 1.0f) {
             float fps = frameCount_ / totalTime_;
