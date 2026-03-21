@@ -2,11 +2,7 @@
 
 #include "GameComponent.h"
 #include <d3d11.h>
-#include <DirectXMath.h>
-#include <wrl.h>
 #include <DirectXCollision.h>
-#include <memory>
-#include "InputDevice.h"
 //#include <random>
 #include "SimpleMath.h"
 
@@ -15,7 +11,7 @@ namespace CGLib {
 	{
 	public:
 
-		bool Initialize();
+		bool Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd) override;
 		void Render(ID3D11DeviceContext* context) override;
 		void Update(float deltaTime) override;
 		void Shutdown() override;

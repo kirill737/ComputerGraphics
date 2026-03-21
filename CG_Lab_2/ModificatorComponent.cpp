@@ -1,7 +1,4 @@
 #include "ModificatorComponent.h"
-#include <d3dcompiler.h>
-#include <iostream>
-#include "InputDevice.h"
 
 namespace CGLib {
 	bool ModificatorComponent::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd)
@@ -13,7 +10,7 @@ namespace CGLib {
 
 		if (FAILED(device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
 			nullptr, &vertexShader_))) return false;
-
+		
 		ID3DBlob* psBlob = nullptr;
 		D3D_SHADER_MACRO macros[] = { {"TEST1", "0"}, {"TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)"}, {nullptr, nullptr} };
 		if (!CompileShader(L"./Shaders/MyVeryFirstShader.hlsl", "PSMain", "ps_5_0", &psBlob, macros)) {
@@ -40,13 +37,12 @@ namespace CGLib {
 		float halfWidth = width_ / 2.0f;
 		float halfHeight = height_ / 2.0f;
 
-		// TODO: Начальные корды через инициализацию?
 		// { x, y, z (глубина?), нормаль }, { R, G, B, A } 
 		DirectX::XMFLOAT4 vertices[] = {
-			{ halfWidth,  halfHeight,  0.5f, 1.0f }, { 1,1,1,1 },
-			{ -halfWidth, -halfHeight, 0.5f, 1.0f }, { 1,1,1,1 },
-			{ halfWidth,  -halfHeight, 0.5f, 1.0f }, { 1,1,1,1 },
-			{ -halfWidth,  halfHeight, 0.5f, 1.0f }, { 1,1,1,1 },
+			{ halfWidth,  halfHeight,  0.5f, 1.0f }, { 0.34, 0.5 ,0.5 ,1 },
+			{ -halfWidth, -halfHeight, 0.5f, 1.0f }, { 0.34, 0.5 ,0.5 ,1 },
+			{ halfWidth,  -halfHeight, 0.5f, 1.0f }, { 0.34, 0.5 ,0.5 ,1 },
+			{ -halfWidth,  halfHeight, 0.5f, 1.0f }, { 0.34, 0.5 ,0.5 ,1 },
 		};
 
 		D3D11_BUFFER_DESC vbDesc = {};
@@ -84,6 +80,8 @@ namespace CGLib {
 
 		box_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
 		box_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
+		
+		UpdateWorldMatrix();
 
 		return true;
 	}
