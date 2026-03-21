@@ -16,21 +16,44 @@ using CGLib::RacketComponent;
 using CGLib::ModificatorComponent;
 
 namespace game {
-	bool Spawner::Spawn() {
-		auto modif = std::make_shared<ModificatorComponent>();
-		if (!modif->Initialize(device_.Get(), context_.Get(), display_.GetHwnd())) {
+
+	void Spawner::Initialize(
+		ID3D11Device* device,
+		ID3D11DeviceContext* context,
+		HWND hwnd,
+		std::vector<std::shared_ptr<GameComponent>>* components
+	)
+	{
+		device_ = device;
+		context_ = context;
+		hwnd_ = hwnd;
+		components_ = components;
+	}
+
+	bool Spawner::Spawn()
+	{
+		auto mod = std::make_shared<CGLib::ModificatorComponent>();
+
+		float x = rndFloat(L_BORDER, R_BORDER);
+		float y = rndFloat(B_BORDER, T_BORDER);
+		mod->SetPos({ x, y });
+
+		if (!mod->Initialize(device_, context_, hwnd_))
 			return false;
-		}
-		
+
+		components_->push_back(mod);
+
 		return true;
 	}
 
-	void Spawner::UpdateTimer(float& deltatime) {
-		spawnTimeCounter += deltatime;
+	void Spawner::UpdateTimer(float& deltaTime)
+	{
+		spawnTimeCounter += deltaTime;
 
-		if (spawnTimeCounter >= spawnRate) {
-			spawnTimeCounter = 0.0f;
+		if (spawnTimeCounter >= spawnRate)
+		{
 			Spawn();
+			spawnTimeCounter = 0.0f;
 		}
-	};
+	}
 }
