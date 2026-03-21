@@ -38,6 +38,7 @@ namespace game {
 
         if (!InitializeDirect3D()) return false;
 
+        // Перегородка по центру
         auto triangle = std::make_shared<TriangleComponent>();
         if (!triangle->Initialize(device_.Get(), context_.Get(), display_.GetHwnd())) {
             return false;
@@ -45,21 +46,22 @@ namespace game {
         components_.push_back(triangle);
 
         // Создаём спавнер
-        spawner.Initialize(device_.Get(), context_.Get(), display_.GetHwnd());
+        //auto spawner = std::make_unique<Spawner>();
+		spawner_.Initialize(device_.Get(), context_.Get(), display_.GetHwnd(), &components_);
 
+        // Ракетки игрока
 		auto playerRacket = std::make_shared<CGLib::RacketComponent>();
 		playerRacket->GivePlayerControll(&input_);
         playerRacket->SetPos(DirectX::SimpleMath::Vector2{ -0.9f, 0.0f });
 		if (!playerRacket->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 			return false;
+        components_.push_back(playerRacket);
 
+        // Ракетки компа
 		auto compRacket = std::make_shared<CGLib::RacketComponent>();
         compRacket->SetPos(DirectX::SimpleMath::Vector2{ 0.9f, 0.0f });
 		if (!compRacket->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 			return false;
-
-		// Добавляем ракетки в Game
-		components_.push_back(playerRacket);
 		components_.push_back(compRacket);
 
 		// Мяч
@@ -71,12 +73,11 @@ namespace game {
 		ball->AddRacket(compRacket);
 		if (!ball->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 			return false;
-
 		components_.push_back(ball);
 
         compRacket->SetBall(ball);
 
-        spawner.AddRacket(playerRacket);
+        /*spawner.AddRacket(playerRacket);*/
 
         return true;
     }
@@ -158,7 +159,7 @@ namespace game {
         totalTime_ += deltaTime;
         frameCount_++;
 
-        spawner.UpdateTimer(deltaTime);
+        spawner_.UpdateTimer(deltaTime);
 
         if (totalTime_ >= 1.0f) {
             float fps = frameCount_ / totalTime_;
