@@ -33,7 +33,7 @@ namespace game {
         void Shutdown();
 
     private:
-        Spawner spawner;
+        Spawner spawner_;
 
         bool InitializeDirect3D();
         void RenderFrame();
