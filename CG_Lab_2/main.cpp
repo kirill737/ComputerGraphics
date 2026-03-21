@@ -1,4 +1,3 @@
-#define NOMINMAX 1
 #include <windows.h>
 #include <iostream>
 #include "RacketComponent.h"
