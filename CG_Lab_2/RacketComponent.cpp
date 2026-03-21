@@ -82,8 +82,8 @@ namespace CGLib {
 		if (FAILED(device->CreateBuffer(&cbDesc, nullptr, &transformBuffer_)))
 			return false;
 
-		racketBox_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
-		racketBox_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
+		box_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
+		box_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
 
 		return true;
 	}
@@ -150,8 +150,8 @@ namespace CGLib {
 					pos_.y -= speed_ * deltaTime;
 			}
 		}
-		racketBox_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
-		racketBox_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
+		box_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
+		box_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
 		UpdateWorldMatrix();
 	}
 

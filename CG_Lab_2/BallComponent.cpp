@@ -1,10 +1,45 @@
 ﻿#include "BallComponent.h"
 #include "RacketComponent.h"
-#include <d3dcompiler.h>
 #include <iostream>
 #include <cmath>
+#include <random>
 
 namespace CGLib {
+
+	void BallComponent::OnCollision(std::shared_ptr<GameComponent> other) {
+		if (auto racket = dynamic_cast<RacketComponent*>(other.get()))
+		{
+			std::cout << "Collision with racket!" << std::endl;
+
+			// Настройка отскока
+			float relativeIntersectY = (racket->GetY() - pos_.y);
+			float normalizedRelativeIntersectionY = relativeIntersectY / (racket->GetHeight() / 2.0f);
+
+			if (normalizedRelativeIntersectionY < -1.0f) normalizedRelativeIntersectionY = -1.0f;
+			if (normalizedRelativeIntersectionY > 1.0f) normalizedRelativeIntersectionY = 1.0f;
+
+			const float MAX_BOUNCE_ANGLE = 75.0f * 3.14159265f / 180.0f;
+			float bounceAngle = normalizedRelativeIntersectionY * MAX_BOUNCE_ANGLE;
+
+			float direction = (pos_.x < racket->GetX()) ? -1.0f : 1.0f;
+
+			float currentSpeed = std::sqrt(speed_.x * speed_.x + speed_.y * speed_.y);
+			currentSpeed += SpeedIncrement;
+
+			speed_.x = currentSpeed * std::cos(bounceAngle) * direction;
+			speed_.y = currentSpeed * -std::sin(bounceAngle);
+
+			if (pos_.x < racket->GetX())
+				pos_.x = racket->GetX() - racket->GetWidth() / 2 - width_ / 2;
+			else
+				pos_.x = racket->GetX() + racket->GetWidth() / 2 + width_ / 2;
+
+			//std::cout << "X: " << speed_.x << " | Y: " << speed_.y << std::endl;
+
+			//UpdateWorldMatrix();
+			
+		}
+	}
 
 	bool BallComponent::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd)
 	{
@@ -47,10 +82,10 @@ namespace CGLib {
 		// TODO: Начальные корды через инициализацию?
 		// { x, y, z (глубина?), нормаль }, { R, G, B, A } 
 		DirectX::XMFLOAT4 vertices[] = {
-			{ halfWidth,  halfHeight,  0.5f, 1.0f }, { 1,1,1,1 },
-			{ -halfWidth, -halfHeight, 0.5f, 1.0f }, { 1,1,1,1 },
-			{ halfWidth,  -halfHeight, 0.5f, 1.0f }, { 1,1,1,1 },
-			{ -halfWidth,  halfHeight, 0.5f, 1.0f }, { 1,1,1,1 },
+			{ halfWidth,  halfHeight,  0.5f, 1.0f }, color_,
+			{ -halfWidth, -halfHeight, 0.5f, 1.0f }, color_,
+			{ halfWidth,  -halfHeight, 0.5f, 1.0f }, color_,
+			{ -halfWidth,  halfHeight, 0.5f, 1.0f }, color_,
 		};
 
 		D3D11_BUFFER_DESC vbDesc = {};
@@ -109,67 +144,31 @@ namespace CGLib {
 
 	void BallComponent::Update(float deltaTime)
 	{
+		if (!active_) return;
+
 		// Двигаем мяч
 		pos_.x += speed_.x * deltaTime;
 		pos_.y += speed_.y * deltaTime;
 
 		// Обновляем BoundingBox мяча
-		ballBox.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
-		ballBox.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
-
-		// Проверяем коллизию с ракетками
-		for (auto& weakRacket : rackets_) {
-			if (auto racket = weakRacket.lock()) {
-				auto racketBox = racket->GetCollisionBox();
-				if (racketBox.Intersects(ballBox)) {
-					/*speed_.x = -speed_.x;
-					float hitPos = (pos_.y - racket->GetY()) / (racket->GetHeight() / 2.0f);
-					speed_.y = hitPos * speed_.y;*/
-
-
-
-					// Настройка отскока
-					float relativeIntersectY = (racket->GetY() - pos_.y);
-					float normalizedRelativeIntersectionY = relativeIntersectY / (racket->GetHeight() / 2.0f);
-
-					if (normalizedRelativeIntersectionY < -1.0f) normalizedRelativeIntersectionY = -1.0f;
-					if (normalizedRelativeIntersectionY > 1.0f) normalizedRelativeIntersectionY = 1.0f;
-
-					const float MAX_BOUNCE_ANGLE = 75.0f * 3.14159265f / 180.0f;
-					float bounceAngle = normalizedRelativeIntersectionY * MAX_BOUNCE_ANGLE;
-
-					float direction = (speed_.x > 0.0f) ? -1.0f : 1.0f;
-
-	
-					float currentSpeed = std::sqrt(speed_.x * speed_.x + speed_.y * speed_.y);
-					currentSpeed += SpeedIncrement;
-
-					speed_.x = currentSpeed * std::cos(bounceAngle) * direction;
-					speed_.y = currentSpeed * -std::sin(bounceAngle);
-
-					// Чтобы мяч не застривал в ракетке
-					if (pos_.x < 0)
-						pos_.x = racket->GetX() + racket->GetWidth() / 2.0f + width_ / 2.0f;
-					else
-						pos_.x = racket->GetX() - racket->GetWidth() / 2.0f - width_ / 2.0f;
-
-
-					//std::cout << "X: " << speed_.x << " | Y: " << speed_.y << std::endl;
-
-				}
-				
-			}
-		}
+		box_.Center = DirectX::XMFLOAT3(pos_.x, pos_.y, 0.0f);
+		box_.Extents = DirectX::XMFLOAT3(width_ / 2.0f, height_ / 2.0f, 0.1f);
 
 		// Проверка границ экрана
 		if (pos_.y + height_ / 2 > 1.0f || pos_.y - height_ / 2 < -1.0f) {
 			speed_.y = -speed_.y; // отскок от верхней/нижней границы
 		}
+
 		// Левая стенка
 		if (pos_.x - width_ / 2 < -1.0f) {
 			speed_.x = -speed_.x;
 
-			RespawnBall();
+			if (oneHit_) {
+				SetActive(false);
+				SetPos(DirectX::SimpleMath::Vector2{ 0.0f, 0.0f });
+			}
+			else 
+				RespawnBall();
 			AddCompScore();
 			ShowScore();
 		}
@@ -177,17 +176,30 @@ namespace CGLib {
 		// Правая стенка
 		if (pos_.x + width_ / 2 > 1.0f) {
 			speed_.x = -speed_.x;
-			
-			RespawnBall();
+
+			if (oneHit_) {
+				SetActive(false);
+				SetPos(DirectX::SimpleMath::Vector2{ 0.0f, 0.0f });
+			}
+			else
+				RespawnBall();
 			AddPlayerScore();
 			ShowScore();
 		}
-
+		
 		UpdateWorldMatrix();
 	}
 
-	void BallComponent::AddRacket(std::shared_ptr<RacketComponent> racket) {
-		rackets_.push_back(racket);
+	void BallComponent::RespawnBall() {
+		pos_ = DirectX::SimpleMath::Vector2{ 0.0f, 0.0f };
+		speed_ = DirectX::SimpleMath::Vector2{ 1.5f, 0.0f };
+	}
+
+	float BallComponent::RandomFloat(float min, float max) {
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		std::uniform_real_distribution<float> dist(min, max);
+		return dist(gen);
 	}
 
 	void BallComponent::Shutdown()
@@ -198,8 +210,6 @@ namespace CGLib {
 		pixelShader_.Reset();
 		inputLayout_.Reset();
 		rasterizerState_.Reset();
-
-		rackets_.clear();
 	}
 
 }

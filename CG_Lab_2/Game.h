@@ -31,9 +31,16 @@ namespace game {
         bool Initialize(HINSTANCE hInstance);
         void Run();
         void Shutdown();
+		void CheckCollisions();
+
+        void SpawnBalls(const int& amount, const DirectX::SimpleMath::Vector2 pos);
 
     private:
         Spawner spawner_;
+
+        void ProcessPendingSpawns();
+        void RemoveDestroyedComponents();
+
 
         bool InitializeDirect3D();
         void RenderFrame();
@@ -48,6 +55,9 @@ namespace game {
         Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTargetView_;
 
         std::vector<std::shared_ptr<GameComponent>> components_;
+        std::vector<DirectX::SimpleMath::Vector2> ballsToSpawn_;
+		std::vector<std::shared_ptr<CGLib::BallComponent>> ballPool_;
+		size_t poolSize_ = 50; // количество шариков в пуле
 
         int screenWidth_ = 800;
         int screenHeight_ = 400;

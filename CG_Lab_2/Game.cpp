@@ -8,14 +8,11 @@
 #include <dxgi.h>
 #include <chrono>
 #include <iostream>
-
-#include <windows.h>
 #include <WinUser.h>
-#include <wrl.h>
+
 #include <d3d.h>
 #include <d3d11.h>
-#include <d3dcompiler.h>
-#include <directxmath.h>
+
 
 
 #pragma comment(lib, "d3d11.lib")
@@ -68,16 +65,26 @@ namespace game {
 		auto ball = std::make_shared<CGLib::BallComponent>();
         ball->SetPos(DirectX::SimpleMath::Vector2{ 0.0f, 0.0f });
 
-		// Передаем в мяч weak_ptr на ракетки
-		ball->AddRacket(playerRacket);
-		ball->AddRacket(compRacket);
+
 		if (!ball->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 			return false;
 		components_.push_back(ball);
 
         compRacket->SetBall(ball);
 
-        /*spawner.AddRacket(playerRacket);*/
+		// Создаём пул шариков
+		for (size_t i = 0; i < poolSize_; ++i) {
+			auto ball = std::make_shared<CGLib::BallComponent>();
+			ball->SetOneHit(true); // если нужно
+			ball->SetActive(false); // начально не активен
+			ball->SetColor(DirectX::SimpleMath::Vector4(0.34f, 0.5f, 0.5f, 1.0f));
+			if (!ball->Initialize(device_.Get(), context_.Get(), display_.GetHwnd())) {
+				std::cerr << "Failed to initialize pooled ball!" << std::endl;
+				return false;
+			}
+			ballPool_.push_back(ball);
+			components_.push_back(ball); // добавляем в общий вектор, чтобы рендерить/апдейтить
+		}
 
         return true;
     }
@@ -112,6 +119,22 @@ namespace game {
         return true;
     }
 
+    void Game::CheckCollisions() {
+		for (auto& a : components_)
+		{
+			for (auto& b : components_)
+			{
+				if (a == b) continue;
+				if (!a->IsActive() || !b->IsActive()) continue; // пропускаем неактивные объекты
+				if (a->GetCollisionBox().Intersects(b->GetCollisionBox()))
+				{
+					a->OnCollision(b);
+					b->OnCollision(a);
+				}
+			}
+		}
+    }
+
     void Game::Run()
     {
         auto prevTime = std::chrono::steady_clock::now();
@@ -127,8 +150,10 @@ namespace game {
             prevTime = curTime;
 
             for (auto& comp : components_) comp->Update(deltaTime);
+            RemoveDestroyedComponents();
+            ProcessPendingSpawns();
             UpdateFPS(deltaTime);
-
+            CheckCollisions();
             RenderFrame();
         }
     }
@@ -147,8 +172,17 @@ namespace game {
         };
 		context_->RSSetViewports(1, &vp);
 		context_->OMSetRenderTargets(1, renderTargetView_.GetAddressOf(), nullptr);
+        int ccc = 0;
+		for (auto& comp : components_) {
+            if (!comp->IsActive()) {
+                ccc++;
+                continue; // пропускаем неактивные объекты
+            }
+			comp->Render(context_.Get());
+		}
 
-		for (auto& comp : components_) comp->Render(context_.Get());
+		//std::cout << "Active components: " << components_.size() - ccc << " / " << components_.size() << "\n";
+			
 
 
 		swapChain_->Present(1, 0);
@@ -171,6 +205,55 @@ namespace game {
             frameCount_ = 0;
         }
     }
+
+
+	void Game::SpawnBalls(const int& amount, const DirectX::SimpleMath::Vector2 pos)
+	{
+		std::cout << "Spawning " << amount << " balls at position: (" << pos.x << ", " << pos.y << ")\n";
+		float angleStep = 30.0f; // угол между шарами в градусах
+		float startAngle = -((amount - 1) * angleStep) / 2.0f;
+
+		int spawned = 0;
+		for (auto& ball : ballPool_) {
+			if (!ball->IsActive() && spawned < amount) {
+                ball->SetPos(DirectX::SimpleMath::Vector2{ pos.x + 0.1f, pos.y });
+
+				// Рассчитываем направление под разным углом
+				float angleRad = (startAngle + spawned * angleStep) * 3.14159265f / 180.0f;
+				float speed = 3.0f;
+				ball->SetSpeed(DirectX::SimpleMath::Vector2{ speed * std::cos(angleRad), speed * std::sin(angleRad) });
+
+				ball->SetActive(true);
+				ball->SetOneHit(true);
+
+				spawned++;
+			}
+			if (spawned >= amount) break;
+		}
+	}
+
+
+	void Game::RemoveDestroyedComponents() {
+		components_.erase(
+			std::remove_if(components_.begin(), components_.end(),
+				[this](const std::shared_ptr<GameComponent>& obj) {
+					if (obj->IsDestroyed()) {
+						if (auto mod = std::dynamic_pointer_cast<CGLib::ModificatorComponent>(obj)) {
+                            ballsToSpawn_.push_back(mod->GetPos());
+						}
+						return true;
+					}
+					return false;
+				}),
+			components_.end());
+	}
+
+	void Game::ProcessPendingSpawns() {
+		for (auto& pos : ballsToSpawn_) {
+			SpawnBalls(4, pos);
+		}
+		ballsToSpawn_.clear();
+	}
 
     void Game::Shutdown()
     {

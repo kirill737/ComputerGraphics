@@ -1,14 +1,10 @@
 #pragma once
 
 #include "RacketComponent.h"
-#include "DisplayWin32.h"
-#include "InputDevice.h"
 #include "ModificatorComponent.h"
 #include "Spawner.h"
 
-#include <windows.h>
 #include <d3d11.h>
-#include <wrl.h>
 #include <vector>
 #include <memory>
 

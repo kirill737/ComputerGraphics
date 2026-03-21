@@ -1,15 +1,10 @@
 #pragma once
 
 #include "GameComponent.h"
-#include <d3d11.h>
-#include <DirectXMath.h>
-#include <wrl.h>
-#include <DirectXCollision.h>
 
-#include <vector>
+#include <d3d11.h>>
 #include <memory>
 #include <iostream>
-#include <random>
 
 namespace CGLib { class RacketComponent; }
 namespace CGLib {
@@ -24,26 +19,30 @@ namespace CGLib {
 		void Shutdown() override;
 
 		// ќтскоки м€ча будут провер€тьс€ только со св€занными с ним ракетками
-		void AddRacket(std::shared_ptr<RacketComponent> racket);
+		void OnCollision(std::shared_ptr<GameComponent> other) override;
 		float GetX() const { return pos_.x; };
 		float GetY() const { return pos_.y; };
 
+
+		// —чЄт
 		void AddPlayerScore() { playerScore++; };
 		void AddCompScore() { compScore++; };
 		short GetPlayerScore() const { return playerScore; };
 		short GetCompScore() const { return compScore; };
 		void ShowScore() const { std::cout << playerScore << "  |  " << compScore << std::endl; };
-		void RespawnBall() {
-			pos_ = DirectX::SimpleMath::Vector2{ 0.0f, 0.0f };
-			speed_ = DirectX::SimpleMath::Vector2{ 1.5f, 0.0f };
-		};
+		
+		// Help
+		float RandomFloat(float min, float max);
+		
 
-		float RandomFloat(float min, float max) {
-			static std::random_device rd;
-			static std::mt19937 gen(rd());
-			std::uniform_real_distribution<float> dist(min, max);
-			return dist(gen);
-		}
+		void RespawnBall();
+		void SetOneHit(bool value) { oneHit_ = value; };
+		//void Activate() { active_ = true; };
+		//void SetActive(bool value) { active_ = value; };
+		//bool IsActive() const { return active_; };
+		void SetYSpeed(float value) { speed_.y = value; };
+		void SetSpeed(const DirectX::SimpleMath::Vector2& newSpeed) { speed_ = newSpeed; };
+		void SetColor(const DirectX::SimpleMath::Vector4& newColor) { color_ = newColor; };
 
 	private:
 
@@ -61,22 +60,22 @@ namespace CGLib {
 		UINT indexCount_ = 6;
 
 
-		// ѕараметры дл€ перемещени€
+		// –азмеры м€ча
 		const float width_ = PXL;
 		const float height_ = 2.0f * PXL;
-		//float speedX_ = 1.5f; // TODO: ѕодобрать скорость шарика
-		//float speedY_ = 3.0f;
+		DirectX::SimpleMath::Vector4 color_{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+		// ѕеремещение м€ча
 		const float SpeedIncrement = 0.05f;
 		DirectX::SimpleMath::Vector2 speed_{ 1.5f, 1.5f };
 
-		//const float minYSpeed = 0.3f;
-		DirectX::BoundingBox ballBox;
-
-		std::vector<std::weak_ptr<RacketComponent>> rackets_;
+		// ≈сли м€ч одноразовый
+		bool oneHit_ = false;
+		/*bool active_ = true;*/
 
 		// —чЄт (лучше бы куда-то вынести в Game)
-		unsigned short playerScore = 0;
-		unsigned short compScore = 0;
+		unsigned int playerScore = 0;
+		unsigned int compScore = 0;
 
 	};
 

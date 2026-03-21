@@ -32,7 +32,7 @@ namespace CGLib {
 		void SetBall(std::weak_ptr<BallComponent> ball) { ball_ = ball; }
 
 
-		DirectX::BoundingBox GetCollisionBox() const { return racketBox_; };
+		/*DirectX::BoundingBox GetCollisionBox() const { return racketBox_; };*/
 
 
 	private:
@@ -62,7 +62,7 @@ namespace CGLib {
 		float reactionDelay_ = 0.4f;   // задержка реакции
 		float targetY_ = 0.0f;          // куда двигаться
 
-		DirectX::BoundingBox racketBox_;
+		//DirectX::BoundingBox racketBox_;
 
 		// Для ИИ
 		bool isUnderPlayerControl_ = false;

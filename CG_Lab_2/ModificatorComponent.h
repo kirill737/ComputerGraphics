@@ -3,7 +3,6 @@
 #include "GameComponent.h"
 #include <d3d11.h>
 #include <DirectXCollision.h>
-//#include <random>
 #include "SimpleMath.h"
 
 namespace CGLib {
@@ -15,9 +14,11 @@ namespace CGLib {
 		void Render(ID3D11DeviceContext* context) override;
 		void Update(float deltaTime) override;
 		void Shutdown() override;
+		void OnCollision(std::shared_ptr<GameComponent> other) override;
 
 		float GetX() const { return pos_.x; };
 		float GetY() const { return pos_.y; };
+		DirectX::SimpleMath::Vector2 GetPos() const { return pos_; };
 		float GetHeight() const { return height_; };
 		float GetWidth() const { return width_; };
 
@@ -26,7 +27,7 @@ namespace CGLib {
 		};*/
 
 
-		DirectX::BoundingBox GetCollisionBox() const { return box_; };
+		//DirectX::BoundingBox GetCollisionBox() const { return box_; };
 
 
 	private:
@@ -46,7 +47,7 @@ namespace CGLib {
 		// Размер
 		float width_ = PXL * 4;
 		float height_ = 2.0f * PXL * 4;
-		DirectX::BoundingBox box_;
+		//DirectX::BoundingBox box_;
 		/*float speed_ = 1.5f;*/
 
 	};

@@ -1,4 +1,7 @@
+#pragma once
+
 #include "ModificatorComponent.h"
+#include "RacketComponent.h"
 
 namespace CGLib {
 	bool ModificatorComponent::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd)
@@ -39,10 +42,10 @@ namespace CGLib {
 
 		// { x, y, z (глубина?), нормаль }, { R, G, B, A } 
 		DirectX::XMFLOAT4 vertices[] = {
-			{ halfWidth,  halfHeight,  0.5f, 1.0f }, { 0.34, 0.5 ,0.5 ,1 },
-			{ -halfWidth, -halfHeight, 0.5f, 1.0f }, { 0.34, 0.5 ,0.5 ,1 },
-			{ halfWidth,  -halfHeight, 0.5f, 1.0f }, { 0.34, 0.5 ,0.5 ,1 },
-			{ -halfWidth,  halfHeight, 0.5f, 1.0f }, { 0.34, 0.5 ,0.5 ,1 },
+			{ halfWidth,  halfHeight,  0.5f, 1.0f }, { 0.34f, 0.5f ,0.5f ,1 },
+			{ -halfWidth, -halfHeight, 0.5f, 1.0f }, { 0.34f, 0.5f ,0.5f ,1 },
+			{ halfWidth,  -halfHeight, 0.5f, 1.0f }, { 0.34f, 0.5f ,0.5f ,1 },
+			{ -halfWidth,  halfHeight, 0.5f, 1.0f }, { 0.34f, 0.5f ,0.5f ,1 },
 		};
 
 		D3D11_BUFFER_DESC vbDesc = {};
@@ -120,6 +123,13 @@ namespace CGLib {
 		pixelShader_.Reset();
 		inputLayout_.Reset();
 		rasterizerState_.Reset();
+	}
+
+	void ModificatorComponent::OnCollision(std::shared_ptr<GameComponent> other) {
+		if (auto racket = dynamic_cast<RacketComponent*>(other.get()))
+		{
+			Destroy();
+		}
 	}
 
 }
