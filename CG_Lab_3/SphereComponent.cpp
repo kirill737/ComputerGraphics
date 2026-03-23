@@ -122,7 +122,7 @@ namespace CGLib {
 
 		CD3D11_RASTERIZER_DESC rsDesc(D3D11_DEFAULT);
 		rsDesc.CullMode = D3D11_CULL_NONE;
-		//rsDesc.FillMode = D3D11_FILL_WIREFRAME;
+		rsDesc.FillMode = D3D11_FILL_WIREFRAME;
 		if (FAILED(device->CreateRasterizerState(&rsDesc, &rasterizerState_))) return false;
 
 		D3D11_BUFFER_DESC cbDesc = {};

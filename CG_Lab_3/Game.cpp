@@ -220,9 +220,29 @@ namespace game {
 		POINT mouseDelta = input_.GetMouseDelta();
 		camera_->Rotate(-mouseDelta.x * sensitivity, -mouseDelta.y * sensitivity);
 
+		static bool pressed = false;
+
+		if (input_.IsKeyPressed('C'))
+		{
+			if (!pressed)
+			{
+				camera_->ToggleMode();
+				pressed = true;
+			}
+		}
+		else
+		{
+			pressed = false;
+		}
+
+		if (input_.IsKeyPressed('P'))
+		{
+			camera_->ToggleProjection();
+		}
+
 		// Колесо мыши
 		int wheelDelta = input_.GetWheelDelta(); // должен возвращать разницу прокрутки за кадр
-		camera_->AdjustFOV(-wheelDelta * 0.001f); // масштабируем скорость изменения FOV
+        camera_->Zoom(-wheelDelta * 0.01f);
 	}
 
 
