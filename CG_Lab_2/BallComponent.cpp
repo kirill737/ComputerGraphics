@@ -35,9 +35,6 @@ namespace CGLib {
 				pos_.x = racket->GetX() + racket->GetWidth() / 2 + width_ / 2;
 
 			//std::cout << "X: " << speed_.x << " | Y: " << speed_.y << std::endl;
-
-			//UpdateWorldMatrix();
-			
 		}
 	}
 
