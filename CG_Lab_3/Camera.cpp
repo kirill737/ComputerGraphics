@@ -35,6 +35,9 @@ namespace CGLib
 
 	void Camera::UpdateViewMatrix()
 	{
+		/*if (orbitalTarget_)
+			target_ = orbitalTarget_->GetPos();*/
+
 		if (mode_ == CameraMode::Orbit)
 		{
 			viewMatrix_ = Matrix::CreateLookAt(position_, target_, Vector3::Up);

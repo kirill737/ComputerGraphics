@@ -2,10 +2,13 @@
 
 #include "SimpleMath.h"
 #include "InputDevice.h"
+#include <memory>
+//#include "GameComponent.h"
 #include <iostream>
 
 namespace CGLib
 {
+	class GameComponent;
 	using namespace DirectX::SimpleMath;
 
 	enum class CameraMode
@@ -53,11 +56,16 @@ namespace CGLib
 		void Zoom(float delta);
 
 		void UpdateOrbit();
+		void SetOrbitalTarget(std::shared_ptr<GameComponent> target)
+		{
+			orbitalTarget_ = target;
+		}
 
 	private:
 		float screenPropotion_ = 1.0f;
 
 		Vector3 target_{ 0.0f, 0.0f, 0.0f };
+		std::shared_ptr<GameComponent> orbitalTarget_;
 
 		Matrix viewMatrix_;
 		Matrix projectionMatrix_;

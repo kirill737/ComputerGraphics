@@ -31,11 +31,7 @@ namespace CGLib {
 		virtual void Shutdown() {};
 		virtual void OnCollision(std::shared_ptr<GameComponent> other) {};
 
-		bool CompileShader(const wchar_t* filename,
-			const char* entryPoint,
-			const char* target,
-			ID3DBlob** blob,
-			D3D_SHADER_MACRO* macros);
+		bool CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** blob, D3D_SHADER_MACRO* macros);
 
 		bool InitializeTransform(ID3D11Device* device);
 
@@ -48,6 +44,15 @@ namespace CGLib {
 			UpdateWorldMatrix();
 		}
 
+		void SetSelfRotationAxis(const DirectX::SimpleMath::Vector3& axis)
+		{
+			selfRotationAxis_ = axis;
+			selfRotationAxis_.Normalize();
+			UpdateWorldMatrix();
+		}
+		
+
+
 	protected:
 
 		ID3D11Device* device_ = nullptr;
@@ -59,13 +64,24 @@ namespace CGLib {
 
 		DirectX::XMMATRIX worldMatrix_ = DirectX::XMMatrixIdentity();
 
-		void UpdateWorldMatrix()
+		/*void UpdateWorldMatrix()
 		{
 			worldMatrix_ = DirectX::XMMatrixTranslation(
 				pos_.x,
 				pos_.y,
 				pos_.z);
+		}*/
+
+		void UpdateWorldMatrix()
+		{
+			worldMatrix_ =
+				DirectX::XMMatrixRotationAxis(selfRotationAxis_, selfRotationAngle_) *
+				DirectX::XMMatrixTranslation(pos_.x, pos_.y, pos_.z);
 		}
+
+		float selfRotationAngle_ = 0.0f;
+		float selfRotationSpeed_ = 0.0f;
+		DirectX::SimpleMath::Vector3 selfRotationAxis_{ 0.0f, 1.0f, 0.0f };
 
 		bool active_ = true;
 

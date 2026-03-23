@@ -40,6 +40,20 @@ namespace game {
             std::shared_ptr<SphereComponent> orbitCenter = nullptr,
             float orbitSpeed = 0.0f);
 
+		void NextOrbitalTarget() {
+			if (components_.empty()) return;
+
+			currentOrbitalTarget = (currentOrbitalTarget + 1) % components_.size();
+			camera_->SetOrbitalTarget(components_[currentOrbitalTarget]);
+		}
+
+		void PrevOrbitalTarget() {
+			if (components_.empty()) return;
+
+			currentOrbitalTarget =
+				(currentOrbitalTarget + components_.size() - 1) % components_.size();
+			camera_->SetOrbitalTarget(components_[currentOrbitalTarget]);
+		}
 
     private:
 
@@ -62,6 +76,8 @@ namespace game {
         int screenWidth_ = 800;
         int screenHeight_ = 400;
 
+
+        size_t currentOrbitalTarget = 0;
         // FPS counter
         float totalTime_ = 0.0f;
         unsigned int frameCount_ = 0;

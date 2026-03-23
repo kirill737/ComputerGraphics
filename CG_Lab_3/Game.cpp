@@ -87,6 +87,7 @@ namespace game {
 
 		// Солнце
         auto sun = CreatePlanet({ 0,0,0 }, 0.0f, 3.0f, SUN_COLOR);
+		camera_->SetOrbitalTarget(components_[currentOrbitalTarget]);
 
 		// Меркурий
 		auto mercury = CreatePlanet({}, 5.0f, 0.5f, MERCURY_COLOR, sun, 1.0f);
@@ -100,11 +101,15 @@ namespace game {
 
 		// Луна вокруг Земли
 		auto moon = CreatePlanet({}, 1.0f, 0.2f, MOON_COLOR, earth, 2.0f); // маленький радиус, выше скорость
-        
+		moon->SetSelfRotationAxis(Vector3(1.0f, 1.0f, 0.0f));
+		moon->SetSelfRotationSpeed(2.0f);
 
-
-
-
+		sun->SetSelfRotationAxis(Vector3(1.0f, 1.0f, 0.0f));
+		sun->SetSelfRotationSpeed(2.0f);
+		mercury->SetSelfRotationSpeed(1.8f);
+		venus->SetSelfRotationSpeed(1.2f);
+		earth->SetSelfRotationSpeed(2.0f);
+		moon->SetSelfRotationSpeed(0.8f);
 
         return true;
     }
@@ -215,6 +220,8 @@ namespace game {
 		if (input_.IsKeyPressed('D')) camera_->MoveRight(deltaTime, speed);
 		if (input_.IsKeyPressed(VK_SPACE)) camera_->MoveUp(deltaTime, speed);
 		if (input_.IsKeyPressed(VK_SHIFT)) camera_->MoveDown(deltaTime, speed);
+		if (input_.IsKeyPressed('E')) NextOrbitalTarget();
+		if (input_.IsKeyPressed('Q')) PrevOrbitalTarget();
 
 		// Мышка
 		POINT mouseDelta = input_.GetMouseDelta();
