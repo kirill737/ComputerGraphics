@@ -16,6 +16,11 @@ namespace CGLib {
             return it != m_keys.end() && it->second;
         }
 
+		void ProcessMouseWheel(int delta)
+		{
+			wheelDelta_ += delta;
+		}
+
 		void ProcessMouseMove(int dx, int dy)
 		{
 			mouseDelta_.x += dx;

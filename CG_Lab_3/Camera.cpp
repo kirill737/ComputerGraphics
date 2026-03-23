@@ -2,22 +2,23 @@
 
 namespace CGLib
 {
-
 	Camera::Camera()
 	{
 		position_ = Vector3(0.0f, 0.0f, -10.0f);
 		target_ = Vector3::Zero;
 		up_ = Vector3::UnitY;
 
-		viewMatrix_ = Matrix::CreateLookAt(position_, target_, up_);
+		UpdateVectors();
+		UpdateViewMatrix();
+		UpdateProjection();
+	}
 
-		projectionMatrix_ =
-			Matrix::CreatePerspectiveFieldOfView(
-				DirectX::XM_PIDIV4,
-				16.0f / 9.0f,
-				0.1f,
-				100.0f
-			);
+	Camera::Camera(const float& screenWidth, const float& screenHeight)
+		: Camera()
+	{
+		screenPropotion_ = screenWidth / screenHeight;
+		UpdateProjection();
+		UpdateViewMatrix();
 	}
 
 	void Camera::SetPos(const Vector3& pos)
@@ -36,12 +37,10 @@ namespace CGLib
 	{
 		if (mode_ == CameraMode::Orbit)
 		{
-			// орбитальная камера — смотри на target_
 			viewMatrix_ = Matrix::CreateLookAt(position_, target_, Vector3::Up);
 		}
 		else
 		{
-			// free-камера — классический FPS-стиль
 			viewMatrix_ = Matrix::CreateLookAt(position_, position_ + forward_, up_);
 		}
 	}
@@ -53,31 +52,21 @@ namespace CGLib
 
 	const Matrix& Camera::GetProjection() const
 	{
-		return Matrix::CreatePerspectiveFieldOfView(
-			DirectX::XM_PIDIV4, // 45 градусов
-			screenPropotion_,
-			0.1f, 100.0f);
-	}
-	/*const Matrix& Camera::GetProjection() const
-	{
 		return projectionMatrix_;
-	}*/
+	}
 
 	void Camera::UpdateVectors()
 	{
-		Vector3 worldUp = Vector3::Up; // фиксированный up
+		Vector3 worldUp = Vector3::Up;
 
-		// пересчёт направления взгляда
 		forward_.x = cosf(pitch_) * sinf(yaw_);
 		forward_.y = sinf(pitch_);
 		forward_.z = cosf(pitch_) * cosf(yaw_);
 		forward_.Normalize();
 
-		// right — всегда перпендикулярен worldUp и forward
 		right_ = forward_.Cross(worldUp);
 		right_.Normalize();
 
-		// up — корректный
 		up_ = right_.Cross(forward_);
 		up_.Normalize();
 	}
@@ -94,8 +83,8 @@ namespace CGLib
 			UpdateOrbit();
 		else
 		{
-			UpdateVectors();      // пересчитываем forward/right/up
-			UpdateViewMatrix();   // используем forward вместо target
+			UpdateVectors();
+			UpdateViewMatrix();
 		}
 	}
 
@@ -103,7 +92,6 @@ namespace CGLib
 	{
 		if (mode_ == CameraMode::Free)
 		{
-			// переключаемся на орбитальную
 			mode_ = CameraMode::Orbit;
 			std::cout << "Orbital cam\n";
 
@@ -115,13 +103,10 @@ namespace CGLib
 			mode_ = CameraMode::Free;
 			std::cout << "Free cam\n";
 
-			// Сохраняем текущую орбитальную дистанцию, чтобы камера была снаружи
 			if (orbitRadius_ < 2.0f) orbitRadius_ = 2.0f;
 
-			// Перемещаем камеру назад от target на orbitRadius_
 			position_ = target_ - forward_ * orbitRadius_;
 
-			// Пересчёт forward/right/up для free-режима
 			Vector3 lookDir = (target_ - position_);
 			lookDir.Normalize();
 			forward_ = lookDir;
@@ -136,17 +121,16 @@ namespace CGLib
 
 	void Camera::ToggleProjection()
 	{
-		if (projectionMode_ == ProjectionMode::Perspective) {
-			std::cout << "Orto mode\n";
-
+		if (projectionMode_ == ProjectionMode::Perspective)
+		{
+			std::cout << "Ortho mode\n";
 			projectionMode_ = ProjectionMode::Orthographic;
 		}
-		
-		else {
+		else
+		{
 			std::cout << "Perspective mode\n";
 			projectionMode_ = ProjectionMode::Perspective;
 		}
-			
 
 		UpdateProjection();
 	}
@@ -164,8 +148,9 @@ namespace CGLib
 		}
 		else
 		{
-			float orthoWidth = 10.0f;   // ширина/высота видимой области
+			float orthoWidth = 10.0f;
 			float orthoHeight = orthoWidth / screenPropotion_;
+
 			projectionMatrix_ = Matrix::CreateOrthographic(
 				orthoWidth,
 				orthoHeight,
@@ -175,6 +160,20 @@ namespace CGLib
 		}
 	}
 
+	void Camera::Zoom(float delta)
+	{
+		std::cout << "Zoom\n";
+		orbitRadius_ += delta;
+
+		if (orbitRadius_ < 2.0f)
+			orbitRadius_ = 2.0f;
+
+		if (orbitRadius_ > 100.0f)
+			orbitRadius_ = 100.0f;
+
+		if (mode_ == CameraMode::Orbit)
+			UpdateOrbit();
+	}
 
 	void Camera::UpdateOrbit()
 	{
@@ -188,5 +187,4 @@ namespace CGLib
 
 		viewMatrix_ = Matrix::CreateLookAt(position_, target_, Vector3::Up);
 	}
-
 }

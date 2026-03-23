@@ -220,30 +220,44 @@ namespace game {
 		POINT mouseDelta = input_.GetMouseDelta();
 		camera_->Rotate(-mouseDelta.x * sensitivity, -mouseDelta.y * sensitivity);
 
-		static bool pressed = false;
+		// Статические переменные для однократного срабатывания клавиш
+		static bool cPressed = false;
+		static bool pPressed = false;
 
+		// Переключение режима камеры (C)
 		if (input_.IsKeyPressed('C'))
 		{
-			if (!pressed)
+			if (!cPressed)
 			{
 				camera_->ToggleMode();
-				pressed = true;
+				cPressed = true;
 			}
 		}
 		else
 		{
-			pressed = false;
+			cPressed = false;
 		}
 
-
+		// Переключение проекции (P)
 		if (input_.IsKeyPressed('P'))
 		{
-			camera_->ToggleProjection();
+			if (!pPressed)
+			{
+				camera_->ToggleProjection();
+				pPressed = true;
+			}
+		}
+		else
+		{
+			pPressed = false;
 		}
 
 		// Колесо мыши
-		int wheelDelta = input_.GetWheelDelta(); // должен возвращать разницу прокрутки за кадр
-        camera_->Zoom(-wheelDelta * 0.01f);
+		int wheelDelta = input_.GetWheelDelta();
+		if (wheelDelta != 0 && camera_->GetMode() == CameraMode::Orbit)
+		{
+			camera_->Zoom(-wheelDelta * 0.01f);
+		}
 	}
 
 

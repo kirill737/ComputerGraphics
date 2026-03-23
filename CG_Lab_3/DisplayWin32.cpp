@@ -169,6 +169,13 @@ namespace CGLib {
 		}
 		return 0;
 
+		case WM_MOUSEWHEEL:
+		{
+			int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			input->ProcessMouseWheel(delta);
+			return 0;
+		}
+
         case WM_DESTROY:
             PostQuitMessage(0);
             return 0;

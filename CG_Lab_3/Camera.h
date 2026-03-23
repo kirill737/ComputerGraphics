@@ -20,17 +20,11 @@ namespace CGLib
 		Orthographic
 	};
 
-	
-
 	class Camera final
 	{
 	public:
-
 		Camera();
-		Camera(const float& screenWidth, const float& screenHeight)
-		{
-			screenPropotion_ = screenWidth / screenHeight;
-		};
+		Camera(const float& screenWidth, const float& screenHeight);
 
 		void SetPos(const Vector3& pos);
 		void LookAt(const Vector3& target);
@@ -39,8 +33,8 @@ namespace CGLib
 		const Matrix& GetProjection() const;
 
 		void UpdateViewMatrix();
+		void UpdateProjection();
 
-		// Движение камеры
 		void MoveForward(float dt, float speed) { position_ += forward_ * speed * dt; UpdateViewMatrix(); }
 		void MoveBackward(float dt, float speed) { position_ -= forward_ * speed * dt; UpdateViewMatrix(); }
 		void MoveRight(float dt, float speed) { position_ += right_ * speed * dt; UpdateViewMatrix(); }
@@ -53,46 +47,34 @@ namespace CGLib
 
 		void ToggleMode();
 		void ToggleProjection();
-		void UpdateProjection();
 
-		void Zoom(float delta)
-		{
-			orbitRadius_ += delta;
+		CameraMode GetMode() const { return mode_; }
 
-			if (orbitRadius_ < 2.0f)
-				orbitRadius_ = 2.0f;
-
-			if (mode_ == CameraMode::Orbit)
-				UpdateOrbit();
-		}
+		void Zoom(float delta);
 
 		void UpdateOrbit();
 
 	private:
-
 		float screenPropotion_ = 1.0f;
-		/*Vector3 position_;*/
-		Vector3 target_;
+
+		Vector3 target_{ 0.0f, 0.0f, 0.0f };
 
 		Matrix viewMatrix_;
 		Matrix projectionMatrix_;
 		InputDevice* input_ = nullptr;
 
 		float fov_ = DirectX::XM_PIDIV4;
-		Vector3 position_{ 0, 0, -5 }; // место камеры
-		float yaw_ = 0.0f;   // вращение вокруг Y
-		float pitch_ = 0.0f; // вращение вокруг X
+		Vector3 position_{ 0, 0, -5 };
+		float yaw_ = 0.0f;
+		float pitch_ = 0.0f;
 
 		Vector3 forward_{ 0,0,1 };
 		Vector3 up_{ 0,1,0 };
 		Vector3 right_{ 1,0,0 };
 
-		ProjectionMode projectionMode_ = ProjectionMode::Perspective; // по умолчанию перспектива
-
-
+		ProjectionMode projectionMode_ = ProjectionMode::Perspective;
 		CameraMode mode_ = CameraMode::Free;
 
 		float orbitRadius_ = 10.0f;
 	};
 }
-
