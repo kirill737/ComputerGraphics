@@ -136,10 +136,17 @@ namespace CGLib
 
 	void Camera::ToggleProjection()
 	{
-		if (projectionMode_ == ProjectionMode::Perspective)
+		if (projectionMode_ == ProjectionMode::Perspective) {
+			std::cout << "Orto mode\n";
+
 			projectionMode_ = ProjectionMode::Orthographic;
-		else
+		}
+		
+		else {
+			std::cout << "Perspective mode\n";
 			projectionMode_ = ProjectionMode::Perspective;
+		}
+			
 
 		UpdateProjection();
 	}

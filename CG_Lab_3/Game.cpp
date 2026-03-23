@@ -235,6 +235,7 @@ namespace game {
 			pressed = false;
 		}
 
+
 		if (input_.IsKeyPressed('P'))
 		{
 			camera_->ToggleProjection();
