@@ -21,11 +21,9 @@ namespace CGLib {
 			if (orbitCenter_) {
 				angle_ += orbitSpeed_ * deltaTime;
 
-				// создаём кватернион вращения вокруг заданной оси
 				DirectX::SimpleMath::Quaternion q =
 					DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(orbitAxis_, angle_);
 
-				// смещённый вектор от центра орбиты
 				DirectX::SimpleMath::Vector3 offset =
 					DirectX::SimpleMath::Vector3::Transform(DirectX::SimpleMath::Vector3(orbitRadius_, 0, 0), q);
 

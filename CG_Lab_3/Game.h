@@ -32,13 +32,14 @@ namespace game {
         void Run();
         void Shutdown();
 
-        std::shared_ptr<SphereComponent> CreatePlanet(
-            const Vector3& centerPos,
-            float orbitRadius,
-            float sphereRadius,
-            const Vector4& color,
-            std::shared_ptr<SphereComponent> orbitCenter = nullptr,
-            float orbitSpeed = 0.0f);
+		std::shared_ptr<SphereComponent> CreatePlanet(
+			const Vector3& centerPos,
+			float orbitRadius,
+			float sphereRadius,
+			const Vector4& color,
+			std::shared_ptr<SphereComponent> orbitCenter = nullptr,
+			float orbitSpeed = 0.0f,
+			const Vector3& orbitAxis = Vector3::Up);
 
 		void NextOrbitalTarget() {
 			if (components_.empty()) return;

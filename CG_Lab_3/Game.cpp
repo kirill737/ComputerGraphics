@@ -12,7 +12,7 @@
 
 #include <d3d.h>
 #include <d3d11.h>
-
+#include <random>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -33,6 +33,26 @@ namespace game {
     using namespace CGLib;
     using namespace DirectX::SimpleMath;
 
+
+
+
+	float RandomFloat(const float& start, const float& end)
+	{
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		static std::uniform_real_distribution<float> dist(start, end);
+
+		return dist(gen);
+	}
+
+	Vector3 RandomVector3(float min = 0.0f, float max = 1.0f) {
+		return Vector3{ RandomFloat(min, max), RandomFloat(min, max), RandomFloat(min, max) };
+	}
+
+	Vector4 RandomColor() {
+		return Vector4{ RandomFloat(0.0f, 1.0f), RandomFloat(0.0f, 1.0f), RandomFloat(0.0f, 1.0f), 1.0f };
+	}
+
     Game::Game() = default;
     Game::~Game() { Shutdown(); }
 
@@ -43,16 +63,19 @@ namespace game {
 		float sphereRadius,
 		const Vector4& color,
 		std::shared_ptr<SphereComponent> orbitCenter,
-		float orbitSpeed) // скорость вращения (радианы/сек)
+		float orbitSpeed,
+		const Vector3& orbitAxis)
 	{
 		std::shared_ptr<SphereComponent> planet;
 
 		if (orbitCenter) {
-			// Создаём орбитирующую сферу
-			planet = std::make_shared<OrbitingSphere>(orbitCenter, orbitRadius, orbitSpeed, sphereRadius);
+			auto orbitingPlanet = std::make_shared<OrbitingSphere>(
+				orbitCenter, orbitRadius, orbitSpeed, sphereRadius);
+
+			orbitingPlanet->SetOrbitAxis(orbitAxis);
+			planet = orbitingPlanet;
 		}
 		else {
-			// Это центр (например, Солнце)
 			planet = std::make_shared<SphereComponent>(centerPos, sphereRadius, 16, 16);
 		}
 
@@ -69,6 +92,18 @@ namespace game {
 
     bool Game::Initialize(HINSTANCE hInstance)
     {
+		int planetsAmount;
+
+		std::cout << "How many planets to create?:\n";
+
+		while (!(std::cin >> planetsAmount)) {
+			std::cout << "Error: enter a number.\n";
+
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		}
+
+
         if (!display_.Initialize(L"My3DApp", screenWidth_, screenHeight_, hInstance, &input_))
             return false;
 
@@ -87,29 +122,60 @@ namespace game {
 
 		// Солнце
         auto sun = CreatePlanet({ 0,0,0 }, 0.0f, 3.0f, SUN_COLOR);
-		camera_->SetOrbitalTarget(components_[currentOrbitalTarget]);
-
-		// Меркурий
-		auto mercury = CreatePlanet({}, 5.0f, 0.5f, MERCURY_COLOR, sun, 1.0f);
-
-		// Венера
-		auto venus = CreatePlanet({}, 7.0f, 0.6f, VENUS_COLOR, sun, 0.8f);
-        //std::dynamic_pointer_cast<CGLib::OrbitingSphere>(venus)->SetOrbitAxis({ 0.0f, 0.0f, 1.0f });
-
-		// Земля
-		auto earth = CreatePlanet({}, 10.0f, 0.65f, EARTH_COLOR, sun, 0.6f);
-
-		// Луна вокруг Земли
-		auto moon = CreatePlanet({}, 1.0f, 0.2f, MOON_COLOR, earth, 2.0f); // маленький радиус, выше скорость
-		moon->SetSelfRotationAxis(Vector3(1.0f, 1.0f, 0.0f));
-		moon->SetSelfRotationSpeed(2.0f);
-
 		sun->SetSelfRotationAxis(Vector3(1.0f, 1.0f, 0.0f));
 		sun->SetSelfRotationSpeed(2.0f);
-		mercury->SetSelfRotationSpeed(1.8f);
+		
+
+		camera_->SetOrbitalTarget(components_[currentOrbitalTarget]);
+
+
+		for (int i = 0; i < planetsAmount; i++) {
+			auto planet = CreatePlanet({}, 5.0f + 1.2f * float(i), 0.65f, RandomColor(), sun, RandomFloat(0.1f, 3.0f), RandomVector3());
+
+			float dice = RandomFloat(0.0f, 1.0f);
+			if (RandomFloat(0.0f, 1.0f) >= 0.5) {
+				auto moon = CreatePlanet({}, 1.0f, 0.2f, RandomColor(), planet, RandomFloat(-2.0f, 2.0f), RandomVector3());
+				moon->SetSelfRotationAxis(RandomVector3());
+				moon->SetSelfRotationSpeed(RandomFloat(0.5f, 3.0f));
+
+			}
+			if (RandomFloat(0.0f, 1.0f) >= 0.7) {
+				auto moon2 = CreatePlanet({}, 1.0f, 0.2f, RandomColor(), planet, RandomFloat(-2.0f, 2.0f), RandomVector3());
+				moon2->SetSelfRotationAxis(RandomVector3());
+				moon2->SetSelfRotationSpeed(RandomFloat(0.5f, 3.0f));
+			}
+		}
+
+		//// Земля
+		//auto earth = CreatePlanet({}, 10.0f, 0.65f, EARTH_COLOR, sun, 0.6f);
+		// 
+		//// Луна вокруг Земли
+		//auto moon = CreatePlanet({}, 1.0f, 0.2f, MOON_COLOR, earth, 2.0f); // маленький радиус, выше скорость
+		//moon->SetSelfRotationAxis(Vector3(1.0f, 1.0f, 0.0f));
+		//moon->SetSelfRotationSpeed(2.0f);
+
+
+
+		//// Меркурий
+		//auto mercury = CreatePlanet({}, 5.0f, 0.5f, MERCURY_COLOR, sun, 1.0f);
+
+		//// Венера
+		//auto venus = CreatePlanet({}, 7.0f, 0.6f, VENUS_COLOR, sun, 0.8f);
+  //      //std::dynamic_pointer_cast<CGLib::OrbitingSphere>(venus)->SetOrbitAxis({ 0.0f, 0.0f, 1.0f });
+
+		//// Земля
+		//auto earth = CreatePlanet({}, 10.0f, 0.65f, EARTH_COLOR, sun, 0.6f);
+
+		// Луна вокруг Земли
+		//auto moon = CreatePlanet({}, 1.0f, 0.2f, MOON_COLOR, earth, 2.0f); // маленький радиус, выше скорость
+		//moon->SetSelfRotationAxis(Vector3(1.0f, 1.0f, 0.0f));
+		//moon->SetSelfRotationSpeed(2.0f);
+
+		
+		/*mercury->SetSelfRotationSpeed(1.8f);
 		venus->SetSelfRotationSpeed(1.2f);
 		earth->SetSelfRotationSpeed(2.0f);
-		moon->SetSelfRotationSpeed(0.8f);
+		moon->SetSelfRotationSpeed(0.8f);*/
 
         return true;
     }

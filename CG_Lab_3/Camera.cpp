@@ -165,7 +165,6 @@ namespace CGLib
 
 	void Camera::Zoom(float delta)
 	{
-		std::cout << "Zoom\n";
 		orbitRadius_ += delta;
 
 		if (orbitRadius_ < 2.0f)
