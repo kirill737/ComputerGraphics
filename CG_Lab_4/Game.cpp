@@ -129,54 +129,7 @@ namespace game {
 		camera_->SetOrbitalTarget(components_[currentOrbitalTarget]);
 
 
-		for (int i = 0; i < planetsAmount; i++) {
-			auto planet = CreatePlanet({}, 5.0f + 1.2f * float(i), 0.65f, RandomColor(), sun, RandomFloat(0.1f, 3.0f), RandomVector3());
-
-			float dice = RandomFloat(0.0f, 1.0f);
-			if (RandomFloat(0.0f, 1.0f) >= 0.5) {
-				auto moon = CreatePlanet({}, 1.0f, 0.2f, RandomColor(), planet, RandomFloat(-2.0f, 2.0f), RandomVector3());
-				moon->SetSelfRotationAxis(RandomVector3());
-				moon->SetSelfRotationSpeed(RandomFloat(0.5f, 3.0f));
-
-			}
-			if (RandomFloat(0.0f, 1.0f) >= 0.7) {
-				auto moon2 = CreatePlanet({}, 1.0f, 0.2f, RandomColor(), planet, RandomFloat(-2.0f, 2.0f), RandomVector3());
-				moon2->SetSelfRotationAxis(RandomVector3());
-				moon2->SetSelfRotationSpeed(RandomFloat(0.5f, 3.0f));
-			}
-		}
-
-		//// Земля
-		//auto earth = CreatePlanet({}, 10.0f, 0.65f, EARTH_COLOR, sun, 0.6f);
-		// 
-		//// Луна вокруг Земли
-		//auto moon = CreatePlanet({}, 1.0f, 0.2f, MOON_COLOR, earth, 2.0f); // маленький радиус, выше скорость
-		//moon->SetSelfRotationAxis(Vector3(1.0f, 1.0f, 0.0f));
-		//moon->SetSelfRotationSpeed(2.0f);
-
-
-
-		//// Меркурий
-		//auto mercury = CreatePlanet({}, 5.0f, 0.5f, MERCURY_COLOR, sun, 1.0f);
-
-		//// Венера
-		//auto venus = CreatePlanet({}, 7.0f, 0.6f, VENUS_COLOR, sun, 0.8f);
-  //      //std::dynamic_pointer_cast<CGLib::OrbitingSphere>(venus)->SetOrbitAxis({ 0.0f, 0.0f, 1.0f });
-
-		//// Земля
-		//auto earth = CreatePlanet({}, 10.0f, 0.65f, EARTH_COLOR, sun, 0.6f);
-
-		// Луна вокруг Земли
-		//auto moon = CreatePlanet({}, 1.0f, 0.2f, MOON_COLOR, earth, 2.0f); // маленький радиус, выше скорость
-		//moon->SetSelfRotationAxis(Vector3(1.0f, 1.0f, 0.0f));
-		//moon->SetSelfRotationSpeed(2.0f);
-
 		
-		/*mercury->SetSelfRotationSpeed(1.8f);
-		venus->SetSelfRotationSpeed(1.2f);
-		earth->SetSelfRotationSpeed(2.0f);
-		moon->SetSelfRotationSpeed(0.8f);*/
-
         return true;
     }
 
