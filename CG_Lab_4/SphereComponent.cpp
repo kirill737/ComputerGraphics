@@ -26,14 +26,15 @@ namespace CGLib {
 		}
 
 		D3D11_INPUT_ELEMENT_DESC layout[] = {
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
 
 		if (FAILED(device->CreateInputLayout(
 			layout,
-			3,
+			4,
 			vsBlob->GetBufferPointer(),
 			vsBlob->GetBufferSize(),
 			&inputLayout_))) {
@@ -42,16 +43,16 @@ namespace CGLib {
 
 		vsBlob->Release(); psBlob->Release();
 
-		// Генерация вершин
 		std::vector<Vertex> vertices;
 		std::vector<UINT> indices;
 
 		// Северный полюс
 		vertices.push_back({
-			{ 0.0f, radius_, 0.0f, 1.0f },
+			{ 0.0f, radius_, 0.0f },
 			color_,
-			{ 0.5f, 0.0f }
-			});
+			{ 0.5f, 0.0f },
+			{ 0.0f, 1.0f, 0.0f }
+		});
 
 		float phiStep = DirectX::XM_PI / stackCount_;
 		float thetaStep = 2.0f * DirectX::XM_PI / sliceCount_;
@@ -71,22 +72,27 @@ namespace CGLib {
 				float u = theta / (2.0f * DirectX::XM_PI);
 				float v = phi / DirectX::XM_PI;
 
+				Vector3 normal = Vector3(x, y, z);
+				normal.Normalize();
+
 				vertices.push_back({
-					{ x, y, z, 1.0f },
+					{ x, y, z },
 					color_,
-					{ u, v }
+					{ u, v },
+					normal
 					});
 			}
 		}
 
 		// Южный полюс
 		vertices.push_back({
-			{ 0.0f, -radius_, 0.0f, 1.0f },
+			{ 0.0f, -radius_, 0.0f },
 			color_,
-			{ 0.5f, 1.0f }
-			});
+			{ 0.5f, 1.0f },
+			{ 0.0f, -1.0f, 0.0f }
+		});
 
-		// Индексы северного полюса
+	
 		for (int i = 1; i <= sliceCount_; i++)
 		{
 			indices.push_back(0);
@@ -97,7 +103,7 @@ namespace CGLib {
 		int baseIndex = 1;
 		int ringVertexCount = sliceCount_ + 1;
 
-		// Индексы внутренних колец
+	
 		for (int i = 0; i < stackCount_ - 2; i++)
 		{
 			for (int j = 0; j < sliceCount_; j++)
@@ -112,7 +118,7 @@ namespace CGLib {
 			}
 		}
 
-		// Индексы южного полюса
+		
 		int southPoleIndex = static_cast<int>(vertices.size() - 1);
 		baseIndex = southPoleIndex - ringVertexCount;
 

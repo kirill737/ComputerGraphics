@@ -14,12 +14,13 @@ namespace CGLib
 	{
 		struct ObjVertexKey
 		{
-			int v;
-			int vt;
+			int vi;
+			int vti;
+			int vni;
 
 			bool operator==(const ObjVertexKey& other) const
 			{
-				return v == other.v && vt == other.vt;
+				return vi == other.vi && vti == other.vti && vni == other.vni;
 			}
 		};
 
@@ -27,7 +28,11 @@ namespace CGLib
 		{
 			size_t operator()(const ObjVertexKey& k) const
 			{
-				return (std::hash<int>()(k.v) * 73856093) ^ (std::hash<int>()(k.vt) * 19349663);
+				size_t h1 = std::hash<int>{}(k.vi);
+				size_t h2 = std::hash<int>{}(k.vti);
+				size_t h3 = std::hash<int>{}(k.vni);
+
+				return h1 ^ (h2 << 1) ^ (h3 << 2);
 			}
 		};
 	}
@@ -38,8 +43,12 @@ namespace CGLib
 		if (!file.is_open())
 			return false;
 
+		vertices_.clear();
+		indices_.clear();
+
 		std::vector<Vector3> positions;
 		std::vector<Vector2> texcoords;
+		std::vector<Vector3> normals;
 
 		std::unordered_map<ObjVertexKey, UINT, ObjVertexKeyHasher> uniqueVertices;
 
@@ -62,6 +71,14 @@ namespace CGLib
 				iss >> u >> v;
 				texcoords.emplace_back(u, 1.0f - v);
 			}
+			else if (prefix == "vn")
+			{
+				float x, y, z;
+				iss >> x >> y >> z;
+				Vector3 n(x, y, z);
+				n.Normalize();
+				normals.push_back(n);
+			}
 			else if (prefix == "f")
 			{
 				std::string tokens[4];
@@ -76,29 +93,39 @@ namespace CGLib
 				auto parseFaceVertex = [&](const std::string& token) -> UINT
 					{
 						std::istringstream tss(token);
-						std::string a, b;
+						std::string a, b, c;
 
-						std::getline(tss, a, '/');
-						std::getline(tss, b, '/');
+						std::getline(tss, a, '/'); // v
+						std::getline(tss, b, '/'); // vt
+						std::getline(tss, c, '/'); // vn
 
-						int vi = std::stoi(a);
+						int vi = a.empty() ? 0 : std::stoi(a);
 						int vti = b.empty() ? 0 : std::stoi(b);
+						int vni = c.empty() ? 0 : std::stoi(c);
 
-						ObjVertexKey key{ vi, vti };
+						ObjVertexKey key{ vi, vti, vni };
 
 						auto it = uniqueVertices.find(key);
 						if (it != uniqueVertices.end())
 							return it->second;
 
-						Vector3 p = positions[vi - 1];
-						Vector2 uv = (vti > 0 && vti <= static_cast<int>(texcoords.size()))
+						Vector3 p = (vi > 0 && vi <= (int)positions.size())
+							? positions[vi - 1]
+							: Vector3::Zero;
+
+						Vector2 uv = (vti > 0 && vti <= (int)texcoords.size())
 							? texcoords[vti - 1]
 							: Vector2(0.0f, 0.0f);
 
-						Vertex vert;
-						vert.position = DirectX::XMFLOAT4(p.x, p.y, p.z, 1.0f);
-						vert.color = DirectX::XMFLOAT4(color_.x, color_.y, color_.z, color_.w);
-						vert.tex = DirectX::XMFLOAT2(uv.x, uv.y);
+						Vector3 n = (vni > 0 && vni <= (int)normals.size())
+							? normals[vni - 1]
+							: Vector3(0.0f, 1.0f, 0.0f);
+
+						Vertex vert{};
+						vert.position = p;
+						vert.color = color_;
+						vert.tex = uv;
+						vert.normal = n;
 
 						UINT newIndex = static_cast<UINT>(vertices_.size());
 						vertices_.push_back(vert);
@@ -131,13 +158,6 @@ namespace CGLib
 	}
 
 	float ModelComponent::GetBoundingRadius() const { return boundingRadius_; }
-
-	/*float ModelComponent::GetBoundingRadius() const
-	{
-		auto s = GetScale();
-		float maxScale = std::max(s.x, std::max(s.y, s.z));
-		return boundingRadius_ * maxScale;
-	}*/
 
 	void ModelComponent::ComputeBoundingRadius()
 	{
@@ -213,10 +233,11 @@ namespace CGLib
 		{
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
 
-		if (FAILED(device->CreateInputLayout(layout, 3, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout_)))
+		if (FAILED(device->CreateInputLayout(layout, 4, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout_)))
 		{
 			vsBlob->Release();
 			psBlob->Release();

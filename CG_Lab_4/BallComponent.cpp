@@ -13,8 +13,6 @@ namespace CGLib
 	void BallComponent::Update(float deltaTime)
 	{
 		Vector3 move = moveInput_;
-
-		// движение только по плоскости XZ
 		move.y = 0.0f;
 
 		if (move.LengthSquared() > 0.0f)
@@ -24,29 +22,45 @@ namespace CGLib
 			Vector3 delta = move * moveSpeed_ * deltaTime;
 			pos_ += delta;
 
-			// шар всегда касается земли
-			pos_.y = radius_;
-
-			// вращение от качения, а не просто так
 			float distance = delta.Length();
 			float rotationAngle = distance / radius_;
 
-			// ось вращения перпендикулярна направлению движения
 			Vector3 rotationAxis = Vector3::Up.Cross(move);
 			if (rotationAxis.LengthSquared() > 0.0f)
 			{
 				rotationAxis.Normalize();
-				SetSelfRotationAxis(rotationAxis);
-				selfRotationAngle_ += rotationAngle;
-			}
 
-			UpdateWorldMatrix();
+				Quaternion deltaRotation =
+					Quaternion::CreateFromAxisAngle(rotationAxis, rotationAngle);
+
+				rotation_ = rotation_ * deltaRotation;
+				rotation_.Normalize();
+			}
 		}
-		else
+
+		// Прыжок
+		if (jumpRequested_)
 		{
-			// даже если не двигается, держим шар на земле
-			pos_.y = radius_;
-			UpdateWorldMatrix();
+			if (jumpCount_ < maxJumps_)
+			{
+				verticalVelocity_ = jumpSpeed_;
+				jumpCount_++;
+			}
+			jumpRequested_ = false;
 		}
+
+		// Гравитация
+		verticalVelocity_ += gravity_ * deltaTime;
+		pos_.y += verticalVelocity_ * deltaTime;
+
+		// Столкновение с землёй
+		if (pos_.y <= radius_)
+		{
+			pos_.y = radius_;
+			verticalVelocity_ = 0.0f;
+			jumpCount_ = 0;
+		}
+
+		UpdateWorldMatrix();
 	}
 }

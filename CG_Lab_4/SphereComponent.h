@@ -53,9 +53,10 @@ namespace CGLib {
 
 		struct Vertex
 		{
-			DirectX::XMFLOAT4 position;
-			DirectX::XMFLOAT4 color;
-			DirectX::XMFLOAT2 tex;
+			Vector3 position;
+			Vector4 color;
+			Vector2 tex;
+			Vector3 normal;
 		};
 
 		UINT stride_ = sizeof(Vertex);

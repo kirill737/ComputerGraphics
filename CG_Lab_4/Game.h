@@ -23,6 +23,19 @@
 using namespace CGLib;
 namespace game {
 
+	struct LightBufferData
+	{
+		DirectX::SimpleMath::Vector3 lightPos;
+		float ambientStrength;
+
+		DirectX::SimpleMath::Vector3 cameraPos;
+		float specPower;
+
+		DirectX::SimpleMath::Vector3 lightColor;
+		float specStrength;
+	};
+
+
     class Game
     {
     public:
@@ -34,6 +47,8 @@ namespace game {
 
         void UpdatePlayer(float deltaTime);
         void UpdateKatamari();
+
+        void UpdateLightBuffer();
 
     private:
 
@@ -70,5 +85,8 @@ namespace game {
 
 		std::vector<std::shared_ptr<CGLib::ModelComponent>> worldObjects_;
 		std::vector<std::shared_ptr<CGLib::ModelComponent>> attachedObjects_;
+
+        // Свет
+        Microsoft::WRL::ComPtr<ID3D11Buffer> lightBuffer_;
     };
 }

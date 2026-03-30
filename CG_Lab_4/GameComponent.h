@@ -62,10 +62,10 @@ namespace CGLib {
 
 		Vector3 GetScale() const { return scale_; }
 
-		Matrix GetRotationMatrix() const
+		/*Matrix GetRotationMatrix() const
 		{
 			return Matrix::CreateFromAxisAngle(selfRotationAxis_, selfRotationAngle_);
-		}
+		}*/
 
 		void SetExternalRotation(const Matrix& rotation)
 		{
@@ -78,12 +78,38 @@ namespace CGLib {
 			return externalRotation_;
 		}
 
-		Matrix GetSelfRotationMatrix() const
+		/*Matrix GetSelfRotationMatrix() const
 		{
 			return Matrix::CreateFromAxisAngle(selfRotationAxis_, selfRotationAngle_);
+		}*/
+
+		void SetRotation(const Quaternion& q)
+		{
+			rotation_ = q;
+			rotation_.Normalize();
+			UpdateWorldMatrix();
 		}
 
+		const Quaternion& GetRotation() const
+		{
+			return rotation_;
+		}
 
+		Matrix GetRotationMatrix() const
+		{
+			return Matrix::CreateFromQuaternion(rotation_);
+		}
+
+		Matrix GetSelfRotationMatrix() const
+		{
+			return Matrix::CreateFromQuaternion(rotation_);
+		}
+
+		Matrix GetWorldRotationMatrix() const
+		{
+			Matrix selfRotation = Matrix::CreateFromQuaternion(rotation_);
+			return selfRotation * externalRotation_;
+		}
 
 	protected:
 
@@ -104,10 +130,12 @@ namespace CGLib {
 				pos_.z);
 		}*/
 
+		
+
 		void UpdateWorldMatrix()
 		{
 			Matrix scaleMatrix = Matrix::CreateScale(scale_);
-			Matrix selfRotation = Matrix::CreateFromAxisAngle(selfRotationAxis_, selfRotationAngle_);
+			Matrix selfRotation = Matrix::CreateFromQuaternion(rotation_);
 			Matrix translationMatrix = Matrix::CreateTranslation(pos_);
 
 			worldMatrix_ =
@@ -120,6 +148,7 @@ namespace CGLib {
 		float selfRotationAngle_ = 0.0f;
 		float selfRotationSpeed_ = 0.0f;
 		Vector3 selfRotationAxis_{ 0.0f, 1.0f, 0.0f };
+		Quaternion rotation_ = Quaternion::Identity;
 
 		bool active_ = true;
 

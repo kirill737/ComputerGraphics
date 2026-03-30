@@ -56,7 +56,7 @@ namespace CGLib
 
 		void ToggleMode();
 		void ToggleProjection();
-
+		Vector3 GetPos() { return position_; }
 		CameraMode GetMode() const { return mode_; }
 
 		void Zoom(float delta);
