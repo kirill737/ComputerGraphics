@@ -2,6 +2,9 @@
 #include <d3dcompiler.h>
 #include <iostream>
 
+#include "WICTextureLoader.h"
+#pragma comment(lib, "Windowscodecs.lib")
+
 namespace CGLib {
 
 	bool GameComponent::Initialize(
@@ -69,14 +72,14 @@ namespace CGLib {
 
 	void GameComponent::SendTransform(
 		ID3D11DeviceContext* context,
-		const DirectX::XMMATRIX& view,
-		const DirectX::XMMATRIX& proj)
+		const Matrix& view,
+		const Matrix& proj)
 	{
 		TransformData data;
 
-		data.world = DirectX::XMMatrixTranspose(worldMatrix_);
-		data.view = DirectX::XMMatrixTranspose(view);
-		data.proj = DirectX::XMMatrixTranspose(proj);
+		data.world = worldMatrix_.Transpose();
+		data.view = view.Transpose();
+		data.proj = proj.Transpose();
 
 		context->UpdateSubresource(
 			transformBuffer_.Get(),
@@ -90,6 +93,46 @@ namespace CGLib {
 			0,
 			1,
 			transformBuffer_.GetAddressOf());
+	}
+
+	bool CGLib::GameComponent::LoadTexture(
+		ID3D11Device* device,
+		ID3D11DeviceContext* context,
+		const wchar_t* filename)
+	{
+		HRESULT hr = DirectX::CreateWICTextureFromFile(
+			device,
+			context,
+			filename,
+			nullptr,
+			&texture_);
+
+		if (FAILED(hr))
+			return false;
+
+		D3D11_SAMPLER_DESC sampDesc = {};
+		sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		sampDesc.MinLOD = 0;
+		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		if (FAILED(device->CreateSamplerState(&sampDesc, &samplerState_)))
+			return false;
+
+		return true;
+	}
+
+	void GameComponent::BindTexture(ID3D11DeviceContext* context)
+	{
+		if (texture_)
+			context->PSSetShaderResources(0, 1, texture_.GetAddressOf());
+
+		if (samplerState_)
+			context->PSSetSamplers(0, 1, samplerState_.GetAddressOf());
+		return;
 	}
 
 }

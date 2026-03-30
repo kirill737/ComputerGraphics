@@ -128,29 +128,45 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BallComponent.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DisplayWin32.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameComponent.cpp" />
+    <ClCompile Include="GroundComponent.cpp" />
     <ClCompile Include="InputDevie.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="CubeComponent.cpp" />
+    <ClCompile Include="ModelComponent.cpp" />
     <ClCompile Include="SimpleMath.cpp" />
     <ClCompile Include="SphereComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BallComponent.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DisplayWin32.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameComponent.h" />
+    <ClInclude Include="GroundComponent.h" />
     <ClInclude Include="InputDevice.h" />
+    <ClInclude Include="ModelComponent.h" />
     <ClInclude Include="OrbitSphere.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SimpleMath.h" />
     <ClInclude Include="CubeComponent.h" />
     <ClInclude Include="SphereComponent.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="packages\directxtk_uwp.2025.10.28.2\build\native\directxtk_uwp.targets" Condition="Exists('packages\directxtk_uwp.2025.10.28.2\build\native\directxtk_uwp.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\directxtk_uwp.2025.10.28.2\build\native\directxtk_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtk_uwp.2025.10.28.2\build\native\directxtk_uwp.targets'))" />
+  </Target>
 </Project>

@@ -3,6 +3,9 @@
 #include <d3dcompiler.h>
 #include <cmath>
 
+#include "WICTextureLoader.h"
+#pragma comment(lib, "Windowscodecs.lib")
+
 namespace CGLib {
 
 	bool SphereComponent::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd)
@@ -18,25 +21,37 @@ namespace CGLib {
 			vsBlob->Release(); return false;
 		}
 
-		if (FAILED(device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &pixelShader_))) { vsBlob->Release(); psBlob->Release(); return false; }
+		if (FAILED(device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &pixelShader_))) {
+			vsBlob->Release(); psBlob->Release(); return false;
+		}
 
 		D3D11_INPUT_ELEMENT_DESC layout[] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
-		if (FAILED(device->CreateInputLayout(layout, 2, vsBlob->GetBufferPointer(),
-			vsBlob->GetBufferSize(), &inputLayout_))) {
+
+		if (FAILED(device->CreateInputLayout(
+			layout,
+			3,
+			vsBlob->GetBufferPointer(),
+			vsBlob->GetBufferSize(),
+			&inputLayout_))) {
 			vsBlob->Release(); psBlob->Release(); return false;
 		}
 
 		vsBlob->Release(); psBlob->Release();
 
-		// Генерация вершин 
+		// Генерация вершин
 		std::vector<Vertex> vertices;
 		std::vector<UINT> indices;
 
 		// Северный полюс
-		vertices.push_back({ {centre_.x, centre_.y + radius_, centre_.z, 1.0f}, color_ });
+		vertices.push_back({
+			{ 0.0f, radius_, 0.0f, 1.0f },
+			color_,
+			{ 0.5f, 0.0f }
+			});
 
 		float phiStep = DirectX::XM_PI / stackCount_;
 		float thetaStep = 2.0f * DirectX::XM_PI / sliceCount_;
@@ -44,6 +59,7 @@ namespace CGLib {
 		for (int i = 1; i <= stackCount_ - 1; i++)
 		{
 			float phi = i * phiStep;
+
 			for (int j = 0; j <= sliceCount_; j++)
 			{
 				float theta = j * thetaStep;
@@ -52,19 +68,25 @@ namespace CGLib {
 				float y = radius_ * cosf(phi);
 				float z = radius_ * sinf(phi) * sinf(theta);
 
-				// Цвет для наглядности
-				/*float r = phi / DirectX::XM_PI;
-				float g = theta / (2.0f * DirectX::XM_PI);
-				float b = 1.0f;*/
+				float u = theta / (2.0f * DirectX::XM_PI);
+				float v = phi / DirectX::XM_PI;
 
-				vertices.push_back({ {centre_.x + x, centre_.y + y, centre_.z + z, 1.0f}, color_ }); 
+				vertices.push_back({
+					{ x, y, z, 1.0f },
+					color_,
+					{ u, v }
+					});
 			}
 		}
 
 		// Южный полюс
-		vertices.push_back({ {centre_.x, centre_.y - radius_, centre_.z, 1.0f}, color_ });
+		vertices.push_back({
+			{ 0.0f, -radius_, 0.0f, 1.0f },
+			color_,
+			{ 0.5f, 1.0f }
+			});
 
-		// Индексы северного полюса 
+		// Индексы северного полюса
 		for (int i = 1; i <= sliceCount_; i++)
 		{
 			indices.push_back(0);
@@ -75,7 +97,7 @@ namespace CGLib {
 		int baseIndex = 1;
 		int ringVertexCount = sliceCount_ + 1;
 
-		// Индексы внутренних колец 
+		// Индексы внутренних колец
 		for (int i = 0; i < stackCount_ - 2; i++)
 		{
 			for (int j = 0; j < sliceCount_; j++)
@@ -90,9 +112,10 @@ namespace CGLib {
 			}
 		}
 
-		// Индексы южного полюса 
+		// Индексы южного полюса
 		int southPoleIndex = static_cast<int>(vertices.size() - 1);
 		baseIndex = southPoleIndex - ringVertexCount;
+
 		for (int i = 0; i < sliceCount_; i++)
 		{
 			indices.push_back(southPoleIndex);
@@ -105,7 +128,6 @@ namespace CGLib {
 		D3D11_BUFFER_DESC vbDesc = {};
 		vbDesc.Usage = D3D11_USAGE_DEFAULT;
 		vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		//vbDesc.ByteWidth = sizeof(vertices);
 		vbDesc.ByteWidth = sizeof(Vertex) * static_cast<UINT>(vertices.size());
 
 		D3D11_SUBRESOURCE_DATA vbData = { vertices.data(), 0, 0 };
@@ -114,7 +136,6 @@ namespace CGLib {
 		D3D11_BUFFER_DESC ibDesc = {};
 		ibDesc.Usage = D3D11_USAGE_DEFAULT;
 		ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		//ibDesc.ByteWidth = sizeof(indices);
 		ibDesc.ByteWidth = sizeof(UINT) * static_cast<UINT>(indices.size());
 
 		D3D11_SUBRESOURCE_DATA ibData = { indices.data(), 0, 0 };
@@ -122,7 +143,7 @@ namespace CGLib {
 
 		CD3D11_RASTERIZER_DESC rsDesc(D3D11_DEFAULT);
 		rsDesc.CullMode = D3D11_CULL_NONE;
-		rsDesc.FillMode = D3D11_FILL_WIREFRAME;
+		//rsDesc.FillMode = D3D11_FILL_WIREFRAME;
 		if (FAILED(device->CreateRasterizerState(&rsDesc, &rasterizerState_))) return false;
 
 		D3D11_BUFFER_DESC cbDesc = {};
@@ -145,6 +166,7 @@ namespace CGLib {
 		context->VSSetShader(vertexShader_.Get(), nullptr, 0);
 		context->PSSetShader(pixelShader_.Get(), nullptr, 0);
 
+		BindTexture(context);
 		SendTransform(context, camera.GetView(), camera.GetProjection());
 
 		context->DrawIndexed(indexCount_, 0, 0);

@@ -45,6 +45,12 @@ namespace CGLib
 		void MoveUp(float dt, float speed) { position_ += up_ * speed * dt; UpdateViewMatrix(); }
 		void MoveDown(float dt, float speed) { position_ -= up_ * speed * dt; UpdateViewMatrix(); }
 
+		Vector3 GetForward() const { return forward_; }
+		Vector3 GetRight() const { return right_; }
+
+		Vector3 GetFlatForward() const;
+		Vector3 GetFlatRight() const;
+
 		void UpdateVectors();
 		void Rotate(float deltaYaw, float deltaPitch);
 
@@ -81,7 +87,7 @@ namespace CGLib
 		Vector3 right_{ 1,0,0 };
 
 		ProjectionMode projectionMode_ = ProjectionMode::Perspective;
-		CameraMode mode_ = CameraMode::Free;
+		CameraMode mode_ = CameraMode::Orbit;
 
 		float orbitRadius_ = 10.0f;
 	};

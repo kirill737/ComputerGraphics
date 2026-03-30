@@ -1,11 +1,12 @@
 #pragma once
-#define NOMINMAX 1
 
 #include "GameComponent.h"
 #include "DisplayWin32.h"
 #include "InputDevice.h"
 #include "Camera.h"
 #include "SphereComponent.h"
+#include "BallComponent.h"
+#include "ModelComponent.h"
 
 
 
@@ -25,36 +26,14 @@ namespace game {
     class Game
     {
     public:
-        Game();
-        ~Game();
-
+		Game() = default;
+		~Game() { Shutdown(); }
         bool Initialize(HINSTANCE hInstance);
         void Run();
         void Shutdown();
 
-		std::shared_ptr<SphereComponent> CreatePlanet(
-			const Vector3& centerPos,
-			float orbitRadius,
-			float sphereRadius,
-			const Vector4& color,
-			std::shared_ptr<SphereComponent> orbitCenter = nullptr,
-			float orbitSpeed = 0.0f,
-			const Vector3& orbitAxis = Vector3::Up);
-
-		void NextOrbitalTarget() {
-			if (components_.empty()) return;
-
-			currentOrbitalTarget = (currentOrbitalTarget + 1) % components_.size();
-			camera_->SetOrbitalTarget(components_[currentOrbitalTarget]);
-		}
-
-		void PrevOrbitalTarget() {
-			if (components_.empty()) return;
-
-			currentOrbitalTarget =
-				(currentOrbitalTarget + components_.size() - 1) % components_.size();
-			camera_->SetOrbitalTarget(components_[currentOrbitalTarget]);
-		}
+        void UpdatePlayer(float deltaTime);
+        void UpdateKatamari();
 
     private:
 
@@ -82,5 +61,14 @@ namespace game {
         // FPS counter
         float totalTime_ = 0.0f;
         unsigned int frameCount_ = 0;
+
+        // Глубина
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencilBuffer_;
+		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView_;
+
+        std::shared_ptr<CGLib::BallComponent> playerBall_;
+
+		std::vector<std::shared_ptr<CGLib::ModelComponent>> worldObjects_;
+		std::vector<std::shared_ptr<CGLib::ModelComponent>> attachedObjects_;
     };
 }

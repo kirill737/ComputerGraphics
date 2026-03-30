@@ -12,28 +12,36 @@ namespace CGLib {
 	{
 	public:
 		SphereComponent() = default;
-		SphereComponent(const Vector3& centre, float radius, int sliceCount = 16, int stackCount = 16)
-			: centre_(centre), radius_(radius), sliceCount_(sliceCount), stackCount_(stackCount) {
+		SphereComponent(float radius, int sliceCount = 16, int stackCount = 16)
+			: radius_(radius), sliceCount_(sliceCount), stackCount_(stackCount) {
 		}
 
 		bool Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd) override;
 		void Render(ID3D11DeviceContext* context, const Camera& camera) override;
 		void Shutdown() override;
-		//void Update(float deltaTime) { rotationAngle_ += rotationSpeed_ * deltaTime; }
+
 		virtual void Update(float deltaTime) override
 		{
-			selfRotationAngle_ += selfRotationSpeed_ * deltaTime;
-			UpdateWorldMatrix();
+			if (selfRotationEnabled_)
+			{
+				selfRotationAngle_ += selfRotationSpeed_ * deltaTime;
+				UpdateWorldMatrix();
+			}
 		}
 
-		void SetSelfRotationSpeed(float speed) { selfRotationSpeed_ = speed; }
-
-		void SetSelfRotationAngle(float angle)
+		void SetSelfRotationSpeed(float speed)
 		{
-			selfRotationAngle_ = angle;
-			UpdateWorldMatrix();
+			selfRotationSpeed_ = speed;
 		}
+
+		void SetSelfRotationEnabled(bool enabled)
+		{
+			selfRotationEnabled_ = enabled;
+		}
+
 		void SetColor(const Vector4& color) { color_ = color; }
+
+		float GetRadius() const { return radius_; }
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer_;
@@ -42,12 +50,12 @@ namespace CGLib {
 		Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader_;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout_;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState_;
-		//Microsoft::WRL::ComPtr<ID3D11Buffer> transformBuffer_;
 
 		struct Vertex
 		{
 			DirectX::XMFLOAT4 position;
 			DirectX::XMFLOAT4 color;
+			DirectX::XMFLOAT2 tex;
 		};
 
 		UINT stride_ = sizeof(Vertex);
@@ -55,14 +63,11 @@ namespace CGLib {
 		UINT indexCount_ = 0;
 
 	protected:
-		Vector3 centre_{ 0.0f, 0.0f, 0.0f };
 		float radius_ = 1.0f;
 		int sliceCount_ = 16;
 		int stackCount_ = 16;
 
-		//float rotationAngle_ = 0.0f;
-		//float rotationSpeed_ = 1.0f;
-
+		bool selfRotationEnabled_ = true;
 		Vector4 color_{ 1.0f, 1.0f, 1.0f, 1.0f };
 	};
 }

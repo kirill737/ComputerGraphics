@@ -8,14 +8,14 @@
 #include "Camera.h"
 
 namespace CGLib {
-
+	using namespace DirectX::SimpleMath;
 	constexpr float PXL = 0.03f;
 
 	struct TransformData
 	{
-		DirectX::XMMATRIX world;
-		DirectX::XMMATRIX view;
-		DirectX::XMMATRIX proj;
+		Matrix world;
+		Matrix view;
+		Matrix proj;
 	};
 
 	class GameComponent
@@ -35,22 +35,54 @@ namespace CGLib {
 
 		bool InitializeTransform(ID3D11Device* device);
 
-		void SendTransform(ID3D11DeviceContext* context, const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& proj);
+		void SendTransform(ID3D11DeviceContext* context, const Matrix& view, const Matrix& proj);
 
-		DirectX::SimpleMath::Vector3 GetPos() const { return pos_; };
-		void SetPos(const DirectX::SimpleMath::Vector3& pos)
+		Vector3 GetPos() const { return pos_; };
+		void SetPos(const Vector3& pos)
 		{
 			pos_ = pos;
 			UpdateWorldMatrix();
 		}
 
-		void SetSelfRotationAxis(const DirectX::SimpleMath::Vector3& axis)
+		void SetSelfRotationAxis(const Vector3& axis)
 		{
 			selfRotationAxis_ = axis;
 			selfRotationAxis_.Normalize();
 			UpdateWorldMatrix();
 		}
-		
+		// Для текстур
+		bool LoadTexture(ID3D11Device* device, ID3D11DeviceContext* context, const wchar_t* filename);
+		void BindTexture(ID3D11DeviceContext* context);
+
+		void SetScale(const Vector3& scale)
+		{
+			scale_ = scale;
+			UpdateWorldMatrix();
+		}
+
+		Vector3 GetScale() const { return scale_; }
+
+		Matrix GetRotationMatrix() const
+		{
+			return Matrix::CreateFromAxisAngle(selfRotationAxis_, selfRotationAngle_);
+		}
+
+		void SetExternalRotation(const Matrix& rotation)
+		{
+			externalRotation_ = rotation;
+			UpdateWorldMatrix();
+		}
+
+		const Matrix& GetExternalRotation() const
+		{
+			return externalRotation_;
+		}
+
+		Matrix GetSelfRotationMatrix() const
+		{
+			return Matrix::CreateFromAxisAngle(selfRotationAxis_, selfRotationAngle_);
+		}
+
 
 
 	protected:
@@ -58,11 +90,11 @@ namespace CGLib {
 		ID3D11Device* device_ = nullptr;
 		ID3D11DeviceContext* context_ = nullptr;
 
-		DirectX::SimpleMath::Vector3 pos_{ 0.0f,0.0f,0.0f };
+		Vector3 pos_{ 0.0f,0.0f,0.0f };
 
 		Microsoft::WRL::ComPtr<ID3D11Buffer> transformBuffer_;
 
-		DirectX::XMMATRIX worldMatrix_ = DirectX::XMMatrixIdentity();
+		Matrix worldMatrix_ = Matrix::Identity;
 
 		/*void UpdateWorldMatrix()
 		{
@@ -74,16 +106,29 @@ namespace CGLib {
 
 		void UpdateWorldMatrix()
 		{
+			Matrix scaleMatrix = Matrix::CreateScale(scale_);
+			Matrix selfRotation = Matrix::CreateFromAxisAngle(selfRotationAxis_, selfRotationAngle_);
+			Matrix translationMatrix = Matrix::CreateTranslation(pos_);
+
 			worldMatrix_ =
-				DirectX::XMMatrixRotationAxis(selfRotationAxis_, selfRotationAngle_) *
-				DirectX::XMMatrixTranslation(pos_.x, pos_.y, pos_.z);
+				scaleMatrix *
+				selfRotation *
+				externalRotation_ *
+				translationMatrix;
 		}
 
 		float selfRotationAngle_ = 0.0f;
 		float selfRotationSpeed_ = 0.0f;
-		DirectX::SimpleMath::Vector3 selfRotationAxis_{ 0.0f, 1.0f, 0.0f };
+		Vector3 selfRotationAxis_{ 0.0f, 1.0f, 0.0f };
 
 		bool active_ = true;
+
+		// Для текстур
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> texture_;
+		Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState_;
+
+		Vector3 scale_{ 1.0f, 1.0f, 1.0f };
+		Matrix externalRotation_ = Matrix::Identity;
 
 	};
 }

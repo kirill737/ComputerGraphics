@@ -61,7 +61,7 @@ namespace CGLib {
 		//GetClientRect(hWnd_, &rect);                  // координаты клиентской области окна
 		//MapWindowPoints(hWnd_, nullptr, (POINT*)&rect, 2);  // переводим в экранные координаты
 		//ClipCursor(&rect);                            // ограничиваем курсор
-		////ShowCursor(FALSE);                            // скрываем курсор
+		//ShowCursor(FALSE);                            // скрываем курсор
 		//ShowCursor(TRUE);                            // скрываем курсор
 
         if (!hWnd_) {

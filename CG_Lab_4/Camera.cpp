@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "GameComponent.h"
 
 namespace CGLib
 {
@@ -21,6 +22,25 @@ namespace CGLib
 		UpdateViewMatrix();
 	}
 
+
+	Vector3 Camera::GetFlatForward() const
+	{
+		Vector3 f = target_ - position_;
+		f.y = 0.0f;
+		if (f.LengthSquared() > 0.0f)
+			f.Normalize();
+		return f;
+	}
+
+	Vector3 Camera::GetFlatRight() const
+	{
+		Vector3 f = GetFlatForward();
+		Vector3 r = f.Cross(Vector3::Up);
+		if (r.LengthSquared() > 0.0f)
+			r.Normalize();
+		return r;
+	}
+
 	void Camera::SetPos(const Vector3& pos)
 	{
 		position_ = pos;
@@ -35,8 +55,8 @@ namespace CGLib
 
 	void Camera::UpdateViewMatrix()
 	{
-		/*if (orbitalTarget_)
-			target_ = orbitalTarget_->GetPos();*/
+		if (orbitalTarget_)
+			target_ = orbitalTarget_->GetPos();
 
 		if (mode_ == CameraMode::Orbit)
 		{
@@ -179,6 +199,9 @@ namespace CGLib
 
 	void Camera::UpdateOrbit()
 	{
+		if (orbitalTarget_)
+			target_ = orbitalTarget_->GetPos();
+
 		Vector3 offset;
 
 		offset.x = orbitRadius_ * cosf(pitch_) * sinf(yaw_);

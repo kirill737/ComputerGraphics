@@ -95,7 +95,7 @@ namespace CGLib {
 
         CD3D11_RASTERIZER_DESC rsDesc(D3D11_DEFAULT);
         rsDesc.CullMode = D3D11_CULL_NONE;
-        rsDesc.FillMode = D3D11_FILL_WIREFRAME; // Рамка
+        //rsDesc.FillMode = D3D11_FILL_WIREFRAME; // Рамка
         if (FAILED(device->CreateRasterizerState(&rsDesc, &rasterizerState_))) return false;
 
 
