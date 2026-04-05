@@ -164,4 +164,24 @@ namespace CGLib {
 		context->UpdateSubresource(materialBuffer_.Get(), 0, nullptr, &material_, 0, 0);
 		context->PSSetConstantBuffers(2, 1, materialBuffer_.GetAddressOf());
 	}
+
+	// Тени
+	bool GameComponent::InitializeShadowBuffer(ID3D11Device* device)
+	{
+		D3D11_BUFFER_DESC desc = {};
+		desc.ByteWidth = sizeof(ShadowData);
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+		return !FAILED(device->CreateBuffer(&desc, nullptr, &shadowBuffer_));
+	}
+
+	void GameComponent::SendShadowData(ID3D11DeviceContext* context, const Matrix& lightViewProj)
+	{
+		ShadowData data;
+		data.lightViewProj = lightViewProj.Transpose();
+
+		context->UpdateSubresource(shadowBuffer_.Get(), 0, nullptr, &data, 0, 0);
+		context->VSSetConstantBuffers(3, 1, shadowBuffer_.GetAddressOf());
+	}
 }

@@ -204,6 +204,7 @@ namespace CGLib
 		return true;
 	}
 
+	
 	bool ModelComponent::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, HWND hwnd)
 	{
 		context_ = context;
@@ -212,8 +213,15 @@ namespace CGLib
 		if (!CompileShader(L"./Shaders/MyVeryFirstShader.hlsl", "VSMain", "vs_5_0", &vsBlob, nullptr))
 			return false;
 
-		if (FAILED(device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, &vertexShader_)))
+		if (FAILED(device->CreateVertexShader(
+			vsBlob->GetBufferPointer(),
+			vsBlob->GetBufferSize(),
+			nullptr,
+			&vertexShader_)))
+		{
+			vsBlob->Release();
 			return false;
+		}
 
 		ID3DBlob* psBlob = nullptr;
 		if (!CompileShader(L"./Shaders/MyVeryFirstShader.hlsl", "PSMain", "ps_5_0", &psBlob, nullptr))
@@ -222,30 +230,85 @@ namespace CGLib
 			return false;
 		}
 
-		if (FAILED(device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &pixelShader_)))
+		if (FAILED(device->CreatePixelShader(
+			psBlob->GetBufferPointer(),
+			psBlob->GetBufferSize(),
+			nullptr,
+			&pixelShader_)))
 		{
 			vsBlob->Release();
 			psBlob->Release();
+			return false;
+		}
+
+		ID3DBlob* shadowVsBlob = nullptr;
+		if (!CompileShader(L"./Shaders/MyVeryFirstShader.hlsl", "VSShadow", "vs_5_0", &shadowVsBlob, nullptr))
+		{
+			vsBlob->Release();
+			psBlob->Release();
+			return false;
+		}
+
+		if (FAILED(device->CreateVertexShader(
+			shadowVsBlob->GetBufferPointer(),
+			shadowVsBlob->GetBufferSize(),
+			nullptr,
+			&shadowVertexShader_)))
+		{
+			vsBlob->Release();
+			psBlob->Release();
+			shadowVsBlob->Release();
+			return false;
+		}
+
+		ID3DBlob* shadowPsBlob = nullptr;
+		if (!CompileShader(L"./Shaders/MyVeryFirstShader.hlsl", "PSShadow", "ps_5_0", &shadowPsBlob, nullptr))
+		{
+			vsBlob->Release();
+			psBlob->Release();
+			shadowVsBlob->Release();
+			return false;
+		}
+
+		if (FAILED(device->CreatePixelShader(
+			shadowPsBlob->GetBufferPointer(),
+			shadowPsBlob->GetBufferSize(),
+			nullptr,
+			&shadowPixelShader_)))
+		{
+			vsBlob->Release();
+			psBlob->Release();
+			shadowVsBlob->Release();
+			shadowPsBlob->Release();
 			return false;
 		}
 
 		D3D11_INPUT_ELEMENT_DESC layout[] =
 		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
 
-		if (FAILED(device->CreateInputLayout(layout, 4, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout_)))
+		if (FAILED(device->CreateInputLayout(
+			layout,
+			4,
+			vsBlob->GetBufferPointer(),
+			vsBlob->GetBufferSize(),
+			&inputLayout_)))
 		{
 			vsBlob->Release();
 			psBlob->Release();
+			shadowVsBlob->Release();
+			shadowPsBlob->Release();
 			return false;
 		}
 
 		vsBlob->Release();
 		psBlob->Release();
+		shadowVsBlob->Release();
+		shadowPsBlob->Release();
 
 		if (!CreateBuffers(device))
 			return false;
@@ -266,6 +329,9 @@ namespace CGLib
 			return false;
 
 		if (!InitializeMaterial(device))
+			return false;
+
+		if (!InitializeShadowBuffer(device))
 			return false;
 
 		UpdateWorldMatrix();
@@ -298,5 +364,22 @@ namespace CGLib
 		inputLayout_.Reset();
 		rasterizerState_.Reset();
 		transformBuffer_.Reset();
+	}
+	// Тени
+	void ModelComponent::RenderShadow(ID3D11DeviceContext* context, const Matrix& lightViewProj)
+	{
+		context->RSSetState(rasterizerState_.Get());
+		context->IASetInputLayout(inputLayout_.Get());
+		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		context->IASetIndexBuffer(indexBuffer_.Get(), DXGI_FORMAT_R32_UINT, 0);
+		context->IASetVertexBuffers(0, 1, vertexBuffer_.GetAddressOf(), &stride_, &offset_);
+
+		context->VSSetShader(shadowVertexShader_.Get(), nullptr, 0);
+		context->PSSetShader(shadowPixelShader_.Get(), nullptr, 0);
+
+		SendTransform(context, Matrix::Identity, Matrix::Identity);
+		SendShadowData(context, lightViewProj);
+
+		context->DrawIndexed(indexCount_, 0, 0);
 	}
 }

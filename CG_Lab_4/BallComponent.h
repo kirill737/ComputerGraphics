@@ -23,6 +23,19 @@ namespace CGLib
 		{
 			jumpRequested_ = true;
 		}
+		void SwitchNitro() {
+			if (isNitro) {
+				SetMoveSpeed(prevSpeed_);
+				isNitro = false;
+			}
+			else {
+				prevSpeed_ = moveSpeed_;
+				SetMoveSpeed(moveSpeed_ * 5);
+				isNitro = true;
+			}
+			
+			
+		}
 
 		bool IsGrounded() const
 		{
@@ -41,5 +54,7 @@ namespace CGLib
 		int maxJumps_ = 5;
 
 		bool jumpRequested_ = false;
+		float prevSpeed_ = moveSpeed_;
+		bool isNitro = false;
 	};
 }

@@ -71,12 +71,19 @@ namespace game {
 		}
 		LOG("Direct3D initialized");
 
+		if (!InitializeShadowMap())
+		{
+			ERR("Shadow maps initialization failed");
+			return false;
+		}
+		LOG("Shadow maps initialized");
+		
+
 		camera_ = std::make_unique<CGLib::Camera>(float(screenWidth_), float(screenHeight_));
 		camera_->SetPos(Vector3(0, 8, -12));
 		camera_->LookAt(Vector3::Zero);
 		LOG("Camera created");
 
-		//std::string files[1] = { "apple" };
 		std::string files[12] = { "apple", "banana", "blackberry", "coconut", "coconut_green", "lemon", "lime", "mango", "orange", "pear", "pineapple", "strawberry" };
 
 		for (const auto& file : files)
@@ -88,7 +95,6 @@ namespace game {
 			model->SetColor(Vector4(1, 1, 1, 1));
 
 			Vector3 pos = RandomVector3(-20.0f, 20.0f);
-			//pos.y = 1.0f;
 			pos.y = RandomFloat(1.0f, 5.0f);
 
 			model->SetPos(pos);
@@ -293,79 +299,41 @@ namespace game {
 
 		LOG("Light buffer created");
 
+
+		D3D11_SAMPLER_DESC shadowSampDesc = {};
+		shadowSampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		shadowSampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+		shadowSampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+		shadowSampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+		shadowSampDesc.BorderColor[0] = 1.0f;
+		shadowSampDesc.BorderColor[1] = 1.0f;
+		shadowSampDesc.BorderColor[2] = 1.0f;
+		shadowSampDesc.BorderColor[3] = 1.0f;
+		shadowSampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		shadowSampDesc.MinLOD = 0;
+		shadowSampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		if (FAILED(device_->CreateSamplerState(&shadowSampDesc, &shadowSamplerState_)))
+		{
+			ERR("Shadow sampler creation failed");
+			return false;
+		}
+		LOG("Shasow sampler created");
+
+
+		D3D11_BUFFER_DESC shadowCbDesc = {};
+		shadowCbDesc.ByteWidth = sizeof(ShadowData);
+		shadowCbDesc.Usage = D3D11_USAGE_DEFAULT;
+		shadowCbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+		if (FAILED(device_->CreateBuffer(&shadowCbDesc, nullptr, &shadowBuffer_)))
+		{
+			ERR("Shadow buffer creation failed");
+			return false;
+		}
+		LOG("Shadow buffer created");
+
 		return true;
-	}
-
-	
-	void Game::UpdateLightBuffer()
-	{
-		if (!camera_ || !context_ || !lightBuffer_)
-			return;
-
-
-		LightBufferData lightData = {};
-		lightData.lightDir = Vector3(1.0f, -1.0f, 0.5f);
-		lightData.lightDir.Normalize();
-
-		lightData.ambientStrength = 0.2f;
-		lightData.cameraPos = camera_->GetPos();
-		lightData.lightColor = Vector3(1.0f, 1.0f, 1.0f);
-
-
-		context_->UpdateSubresource(lightBuffer_.Get(), 0, nullptr, &lightData, 0, 0);
-		context_->VSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());
-		context_->PSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());
-	}
-
-
-	void Game::UpdateKatamari()
-	{
-		if (!playerBall_) return;
-
-		Vector3 ballPos = playerBall_->GetPos();
-		float ballRadius = playerBall_->GetRadius() * playerBall_->GetScale().x;
-
-		Matrix ballRotation = playerBall_->GetSelfRotationMatrix();
-
-		for (auto& obj : worldObjects_)
-		{
-			if (!obj || obj->IsCollected())
-				continue;
-
-			Vector3 objPos = obj->GetPos();
-			float objRadius = obj->GetBoundingRadius();
-
-			float dist = (ballPos - objPos).Length();
-
-			if (dist <= ballRadius + objRadius)
-			{
-				obj->SetCollected(true);
-
-				Vector3 worldOffset = objPos - ballPos;
-
-				Matrix invBallRotation = ballRotation.Invert();
-				Vector3 localOffset = Vector3::Transform(worldOffset, invBallRotation);
-				obj->SetAttachOffset(localOffset);
-
-				
-				Matrix objWorldRotation = obj->GetWorldRotationMatrix();
-				Matrix localRotationOffset = objWorldRotation * invBallRotation;
-				obj->SetAttachRotationOffset(localRotationOffset);
-
-				attachedObjects_.push_back(obj);
-			}
-		}
-
-		for (auto& obj : attachedObjects_)
-		{
-			if (!obj) continue;
-
-			Vector3 rotatedOffset = Vector3::Transform(obj->GetAttachOffset(), ballRotation);
-			obj->SetPos(playerBall_->GetPos() + rotatedOffset);
-
-			Matrix finalRotation = obj->GetAttachRotationOffset() * ballRotation;
-			obj->SetExternalRotation(finalRotation);
-		}
 	}
 
     void Game::Run()
@@ -393,6 +361,9 @@ namespace game {
 
 	void Game::RenderFrame()
 	{
+		UpdateLightMatrices();
+		RenderShadowPass();
+
 		float bgColor[] = { 242.0f / 256.0f, 227.0f / 256.0f, 187.0f / 256.0f, 1.0f };
 
 		context_->ClearState();
@@ -413,7 +384,10 @@ namespace game {
 		context_->OMSetRenderTargets(1, renderTargetView_.GetAddressOf(), depthStencilView_.Get());
 
 		UpdateLightBuffer();
+		UpdateShadowBuffer();
 
+		context_->PSSetShaderResources(1, 1, shadowSRV_.GetAddressOf());
+		context_->PSSetSamplers(1, 1, shadowSamplerState_.GetAddressOf());
 		for (auto& comp : components_) {
 			comp->Render(context_.Get(), *camera_);
 		}
@@ -449,8 +423,8 @@ namespace game {
 		if (input_.IsKeyPressed('S')) camera_->MoveBackward(deltaTime, speed);
 		if (input_.IsKeyPressed('A')) camera_->MoveLeft(deltaTime, speed);
 		if (input_.IsKeyPressed('D')) camera_->MoveRight(deltaTime, speed);*/
-		if (input_.IsKeyPressed(VK_SPACE)) camera_->MoveUp(deltaTime, speed);
-		if (input_.IsKeyPressed(VK_SHIFT)) camera_->MoveDown(deltaTime, speed);
+		/*if (input_.IsKeyPressed(VK_SPACE)) camera_->MoveUp(deltaTime, speed);
+		if (input_.IsKeyPressed(VK_SHIFT)) camera_->MoveDown(deltaTime, speed);*/
 
 		// Мышка
 		POINT mouseDelta = input_.GetMouseDelta();
@@ -466,6 +440,74 @@ namespace game {
 		if (camera_->GetMode() == CameraMode::Orbit)
 		{
 			camera_->UpdateOrbit();
+		}
+	}
+
+    void Game::Shutdown()
+    {
+        for (auto& comp : components_) comp->Shutdown();
+        components_.clear();
+
+        renderTargetView_.Reset();
+		depthStencilView_.Reset();
+		depthStencilBuffer_.Reset();
+
+        context_.Reset();
+        device_.Reset();
+        swapChain_.Reset();
+
+        display_.Shutdown();
+    }
+
+
+	// Катамари
+	void Game::UpdateKatamari()
+	{
+		if (!playerBall_) return;
+
+		Vector3 ballPos = playerBall_->GetPos();
+		float ballRadius = playerBall_->GetRadius() * playerBall_->GetScale().x;
+
+		Matrix ballRotation = playerBall_->GetSelfRotationMatrix();
+
+		for (auto& obj : worldObjects_)
+		{
+			if (!obj || obj->IsCollected())
+				continue;
+
+			Vector3 objPos = obj->GetPos();
+			float objRadius = obj->GetBoundingRadius();
+
+			float dist = (ballPos - objPos).Length();
+
+			if (dist <= ballRadius + objRadius)
+			{
+				obj->SetCollected(true);
+
+				Vector3 worldOffset = objPos - ballPos;
+
+				Matrix invBallRotation = ballRotation.Invert();
+				Vector3 localOffset = Vector3::Transform(worldOffset, invBallRotation);
+				obj->SetAttachOffset(localOffset);
+
+
+				Matrix objWorldRotation = obj->GetWorldRotationMatrix();
+				Matrix localRotationOffset = objWorldRotation * invBallRotation;
+				obj->SetAttachRotationOffset(localRotationOffset);
+
+				attachedObjects_.push_back(obj);
+			}
+		}
+
+		for (auto& obj : attachedObjects_)
+		{
+			if (!obj) continue;
+
+			Vector3 rotatedOffset = Vector3::Transform(obj->GetAttachOffset(), ballRotation);
+			obj->SetPos(playerBall_->GetPos() + rotatedOffset);
+
+			Matrix finalRotation = obj->GetAttachRotationOffset() * ballRotation;
+			obj->SetExternalRotation(finalRotation);
 		}
 	}
 
@@ -499,22 +541,120 @@ namespace game {
 		{
 			spacePressed = false;
 		}
+
+		static bool shiftPressed = false;
+
+		if (input_.IsKeyPressed(VK_SHIFT))
+		{
+			if (!shiftPressed)
+			{
+				playerBall_->SwitchNitro();
+				shiftPressed = true;
+			}
+		}
+		else
+		{
+			shiftPressed = false;
+		}
 	}
 
-    void Game::Shutdown()
-    {
-        for (auto& comp : components_) comp->Shutdown();
-        components_.clear();
+	// Свет
+	void Game::UpdateLightBuffer()
+	{
+		if (!camera_ || !context_ || !lightBuffer_)
+			return;
 
-        renderTargetView_.Reset();
-		depthStencilView_.Reset();
-		depthStencilBuffer_.Reset();
 
-        context_.Reset();
-        device_.Reset();
-        swapChain_.Reset();
+		LightBufferData lightData = {};
+		lightData.lightDir = Vector3(1.0f, -1.0f, 0.5f);
+		lightData.lightDir.Normalize();
 
-        display_.Shutdown();
-    }
+		lightData.ambientStrength = 0.2f;
+		lightData.cameraPos = camera_->GetPos();
+		lightData.lightColor = Vector3(1.0f, 1.0f, 1.0f);
 
+
+		context_->UpdateSubresource(lightBuffer_.Get(), 0, nullptr, &lightData, 0, 0);
+		context_->VSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());
+		context_->PSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());
+	}
+
+
+	// Тени
+	bool Game::InitializeShadowMap()
+	{
+		const UINT shadowSize = 2048;
+
+		D3D11_TEXTURE2D_DESC texDesc = {};
+		texDesc.Width = shadowSize;
+		texDesc.Height = shadowSize;
+		texDesc.MipLevels = 1;
+		texDesc.ArraySize = 1;
+		texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+
+		if (FAILED(device_->CreateTexture2D(&texDesc, nullptr, &shadowMapTexture_)))
+			return false;
+
+		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+		dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+
+		if (FAILED(device_->CreateDepthStencilView(shadowMapTexture_.Get(), &dsvDesc, &shadowDSV_)))
+			return false;
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MipLevels = 1;
+
+		if (FAILED(device_->CreateShaderResourceView(shadowMapTexture_.Get(), &srvDesc, &shadowSRV_)))
+			return false;
+
+		shadowViewport_.TopLeftX = 0;
+		shadowViewport_.TopLeftY = 0;
+		shadowViewport_.Width = (float)shadowSize;
+		shadowViewport_.Height = (float)shadowSize;
+		shadowViewport_.MinDepth = 0.0f;
+		shadowViewport_.MaxDepth = 1.0f;
+
+		return true;
+	}
+
+	void Game::UpdateLightMatrices()
+	{
+		Vector3 lightDir = Vector3(1.0f, -1.0f, 0.5f);
+		lightDir.Normalize();
+
+		Vector3 sceneCenter = Vector3(0.0f, 0.0f, 0.0f);
+		Vector3 lightPos = sceneCenter - lightDir * 50.0f;
+
+		lightView_ = Matrix::CreateLookAt(lightPos, sceneCenter, Vector3::Up);
+		lightProj_ = Matrix::CreateOrthographic(80.0f, 80.0f, 1.0f, 150.0f);
+
+		lightViewProj_ = lightView_ * lightProj_;
+	}
+
+	void Game::UpdateShadowBuffer()
+	{
+		ShadowData data = {};
+		data.lightViewProj = lightViewProj_.Transpose();
+
+		context_->UpdateSubresource(shadowBuffer_.Get(), 0, nullptr, &data, 0, 0);
+		context_->VSSetConstantBuffers(3, 1, shadowBuffer_.GetAddressOf());
+		context_->PSSetConstantBuffers(3, 1, shadowBuffer_.GetAddressOf());
+	}
+
+	void Game::RenderShadowPass()
+	{
+		context_->OMSetRenderTargets(0, nullptr, shadowDSV_.Get());
+		context_->RSSetViewports(1, &shadowViewport_);
+		context_->ClearDepthStencilView(shadowDSV_.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+		for (auto& comp : components_)
+		{
+			comp->RenderShadow(context_.Get(), lightViewProj_);
+		}
+	}
 }

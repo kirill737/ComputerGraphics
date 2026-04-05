@@ -35,12 +35,19 @@ namespace CGLib {
 		void SetColor(const Vector4& color) { color_ = color; }
 
 		float GetRadius() const { return radius_; }
+		
+		// Тени
+		void RenderShadow(ID3D11DeviceContext* context, const Matrix& lightViewProj) override;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer_;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer_;
 		Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader_;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader_;
+
+		Microsoft::WRL::ComPtr<ID3D11VertexShader> shadowVertexShader_;
+		Microsoft::WRL::ComPtr<ID3D11PixelShader> shadowPixelShader_;
+
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout_;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState_;
 

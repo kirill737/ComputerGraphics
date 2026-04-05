@@ -16,3 +16,8 @@ struct LightBufferData
 	DirectX::SimpleMath::Vector3 lightColor;
 	float pad1 = 0.0f;
 };
+
+//struct ShadowData
+//{
+//	Matrix lightViewProj;
+//};

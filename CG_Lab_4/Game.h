@@ -38,6 +38,12 @@ namespace game {
 
         void UpdateLightBuffer();
 
+        // Тени
+        bool InitializeShadowMap();
+        void UpdateLightMatrices();
+        void UpdateShadowBuffer();
+        void RenderShadowPass();
+
     private:
 
         bool InitializeDirect3D();
@@ -76,5 +82,18 @@ namespace game {
 
         // Свет
         Microsoft::WRL::ComPtr<ID3D11Buffer> lightBuffer_;
+        Microsoft::WRL::ComPtr<ID3D11Buffer> shadowBuffer_;
+
+        // Тени
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> shadowMapTexture_;
+		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowDSV_;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV_;
+        Microsoft::WRL::ComPtr<ID3D11SamplerState> shadowSamplerState_;
+
+		D3D11_VIEWPORT shadowViewport_{};
+
+		Matrix lightView_ = Matrix::Identity;
+		Matrix lightProj_ = Matrix::Identity;
+		Matrix lightViewProj_ = Matrix::Identity;
     };
 }

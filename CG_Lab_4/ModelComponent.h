@@ -37,6 +37,8 @@ namespace CGLib
 
 		const DirectX::SimpleMath::Matrix& GetAttachRotationOffset() const { return attachRotationOffset_; }
 
+		// Тени
+		void RenderShadow(ID3D11DeviceContext* context, const Matrix& lightViewProj) override;
 	private:
 		struct Vertex
 		{
@@ -63,6 +65,10 @@ namespace CGLib
 		Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer_;
 		Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader_;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader_;
+
+		Microsoft::WRL::ComPtr<ID3D11VertexShader> shadowVertexShader_;
+		Microsoft::WRL::ComPtr<ID3D11PixelShader> shadowPixelShader_;
+
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout_;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState_;
 

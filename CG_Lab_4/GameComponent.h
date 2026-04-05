@@ -27,6 +27,11 @@ namespace CGLib {
 		DirectX::SimpleMath::Vector3 padding{ 0.0f, 0.0f, 0.0f };
 	};
 
+	struct ShadowData
+	{
+		Matrix lightViewProj;
+	};
+
 	class GameComponent
 	{
 	public:
@@ -59,6 +64,7 @@ namespace CGLib {
 			selfRotationAxis_.Normalize();
 			UpdateWorldMatrix();
 		}
+
 		// Для текстур
 		bool LoadTexture(ID3D11Device* device, ID3D11DeviceContext* context, const wchar_t* filename);
 		void BindTexture(ID3D11DeviceContext* context);
@@ -118,6 +124,10 @@ namespace CGLib {
 		bool InitializeMaterial(ID3D11Device* device);
 		void SendMaterial(ID3D11DeviceContext* context);
 
+		// Тени
+		virtual void RenderShadow(ID3D11DeviceContext* context, const Matrix& lightViewProj) {}
+		bool InitializeShadowBuffer(ID3D11Device* device);
+		void SendShadowData(ID3D11DeviceContext* context, const Matrix& lightViewProj);
 	protected:
 
 		ID3D11Device* device_ = nullptr;
@@ -132,9 +142,11 @@ namespace CGLib {
 		// Материал
 		MaterialData material_;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> materialBuffer_;
+		
+		//Тени
+		Microsoft::WRL::ComPtr<ID3D11Buffer> shadowBuffer_;
 
 		
-
 		void UpdateWorldMatrix();
 
 		float selfRotationAngle_ = 0.0f;
