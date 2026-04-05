@@ -18,6 +18,15 @@ namespace CGLib {
 		Matrix proj;
 	};
 
+	struct MaterialData
+	{
+		DirectX::SimpleMath::Vector3 specularColor{ 1.0f, 1.0f, 1.0f };
+		float shininess = 32.0f;
+
+		float specStrength = 0.5f;
+		DirectX::SimpleMath::Vector3 padding{ 0.0f, 0.0f, 0.0f };
+	};
+
 	class GameComponent
 	{
 	public:
@@ -62,11 +71,6 @@ namespace CGLib {
 
 		Vector3 GetScale() const { return scale_; }
 
-		/*Matrix GetRotationMatrix() const
-		{
-			return Matrix::CreateFromAxisAngle(selfRotationAxis_, selfRotationAngle_);
-		}*/
-
 		void SetExternalRotation(const Matrix& rotation)
 		{
 			externalRotation_ = rotation;
@@ -77,11 +81,6 @@ namespace CGLib {
 		{
 			return externalRotation_;
 		}
-
-		/*Matrix GetSelfRotationMatrix() const
-		{
-			return Matrix::CreateFromAxisAngle(selfRotationAxis_, selfRotationAngle_);
-		}*/
 
 		void SetRotation(const Quaternion& q)
 		{
@@ -111,6 +110,14 @@ namespace CGLib {
 			return selfRotation * externalRotation_;
 		}
 
+		// Мтериал
+		void SetSpecularColor(const Vector3& color) { material_.specularColor = color; }
+		void SetShininess(float value) { material_.shininess = value; }
+		void SetSpecStrength(float value) { material_.specStrength = value; }
+
+		bool InitializeMaterial(ID3D11Device* device);
+		void SendMaterial(ID3D11DeviceContext* context);
+
 	protected:
 
 		ID3D11Device* device_ = nullptr;
@@ -122,28 +129,13 @@ namespace CGLib {
 
 		Matrix worldMatrix_ = Matrix::Identity;
 
-		/*void UpdateWorldMatrix()
-		{
-			worldMatrix_ = DirectX::XMMatrixTranslation(
-				pos_.x,
-				pos_.y,
-				pos_.z);
-		}*/
+		// Материал
+		MaterialData material_;
+		Microsoft::WRL::ComPtr<ID3D11Buffer> materialBuffer_;
 
 		
 
-		void UpdateWorldMatrix()
-		{
-			Matrix scaleMatrix = Matrix::CreateScale(scale_);
-			Matrix selfRotation = Matrix::CreateFromQuaternion(rotation_);
-			Matrix translationMatrix = Matrix::CreateTranslation(pos_);
-
-			worldMatrix_ =
-				scaleMatrix *
-				selfRotation *
-				externalRotation_ *
-				translationMatrix;
-		}
+		void UpdateWorldMatrix();
 
 		float selfRotationAngle_ = 0.0f;
 		float selfRotationSpeed_ = 0.0f;

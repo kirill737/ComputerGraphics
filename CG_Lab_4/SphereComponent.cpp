@@ -159,6 +159,9 @@ namespace CGLib {
 		if (FAILED(device->CreateBuffer(&cbDesc, nullptr, &transformBuffer_)))
 			return false;
 
+		if (!InitializeMaterial(device))
+			return false;
+
 		return true;
 	}
 
@@ -174,6 +177,7 @@ namespace CGLib {
 
 		BindTexture(context);
 		SendTransform(context, camera.GetView(), camera.GetProjection());
+		SendMaterial(context);
 
 		context->DrawIndexed(indexCount_, 0, 0);
 	}

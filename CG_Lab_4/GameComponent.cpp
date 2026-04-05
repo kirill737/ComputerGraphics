@@ -135,4 +135,33 @@ namespace CGLib {
 		return;
 	}
 
+	void GameComponent::UpdateWorldMatrix()
+	{
+		Matrix scaleMatrix = Matrix::CreateScale(scale_);
+		Matrix selfRotation = Matrix::CreateFromQuaternion(rotation_);
+		Matrix translationMatrix = Matrix::CreateTranslation(pos_);
+
+		worldMatrix_ =
+			scaleMatrix *
+			selfRotation *
+			externalRotation_ *
+			translationMatrix;
+	}
+
+	// Материал
+	bool GameComponent::InitializeMaterial(ID3D11Device* device)
+	{
+		D3D11_BUFFER_DESC desc = {};
+		desc.ByteWidth = sizeof(MaterialData);
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+		return !FAILED(device->CreateBuffer(&desc, nullptr, &materialBuffer_));
+	}
+
+	void GameComponent::SendMaterial(ID3D11DeviceContext* context)
+	{
+		context->UpdateSubresource(materialBuffer_.Get(), 0, nullptr, &material_, 0, 0);
+		context->PSSetConstantBuffers(2, 1, materialBuffer_.GetAddressOf());
+	}
 }

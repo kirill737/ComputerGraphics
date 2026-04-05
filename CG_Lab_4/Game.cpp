@@ -93,6 +93,10 @@ namespace game {
 			model->SetPos(pos);
 			model->SetScale(Vector3(1, 1, 1));
 
+			model->SetShininess(8.0f);
+			model->SetSpecStrength(0.1f);
+			model->SetSpecularColor({ 0.4f, 0.4f, 0.4f });
+
 			std::string objPath = "./Models/OBJ/Correct/" + file + ".fbx.obj";
 
 			LOG("LoadOBJ: " << objPath);
@@ -165,6 +169,10 @@ namespace game {
 		playerBall_->SetColor(Vector4(1, 1, 1, 1));
 		playerBall_->SetPos(Vector3(0, 1, 0));
 		playerBall_->SetMoveSpeed(5.0f);
+
+		playerBall_->SetShininess(64.0f);
+		playerBall_->SetSpecStrength(1.0f);
+		playerBall_->SetSpecularColor({ 1.0f, 1.0f, 1.0f });
 
 		if (!playerBall_->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 		{
@@ -294,14 +302,14 @@ namespace game {
 			return;
 
 		LightBufferData lightData = {};
-		lightData.lightPos = Vector3(5.0f, 8.0f, -5.0f);
+		lightData.lightPos = Vector3(50.0f, 50.0f, 50.0f);
 		lightData.ambientStrength = 0.2f;
 
 		lightData.cameraPos = camera_->GetPos();
-		lightData.specPower = 32.0f;
+		//lightData.specPower = 10.0f;
 
 		lightData.lightColor = Vector3(1.0f, 1.0f, 1.0f);
-		lightData.specStrength = 0.6f;
+		//lightData.specStrength = 0.8f; // Фоновая подсветка
 
 		context_->UpdateSubresource(lightBuffer_.Get(), 0, nullptr, &lightData, 0, 0);
 		context_->VSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());

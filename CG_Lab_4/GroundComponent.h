@@ -9,6 +9,9 @@ namespace CGLib
 {
 	using namespace DirectX::SimpleMath;
 
+
+
+
 	class GroundComponent : public GameComponent
 	{
 	public:

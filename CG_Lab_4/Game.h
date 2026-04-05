@@ -29,10 +29,10 @@ namespace game {
 		float ambientStrength;
 
 		DirectX::SimpleMath::Vector3 cameraPos;
-		float specPower;
+		float pad0 = 0.0f;
 
 		DirectX::SimpleMath::Vector3 lightColor;
-		float specStrength;
+		float pad1 = 0.0f;
 	};
 
 

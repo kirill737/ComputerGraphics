@@ -10,6 +10,9 @@ namespace CGLib
 {
 	using namespace DirectX::SimpleMath;
 
+
+
+
 	class ModelComponent : public GameComponent
 	{
 	public:
