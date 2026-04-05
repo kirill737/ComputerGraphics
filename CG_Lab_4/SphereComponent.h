@@ -20,14 +20,7 @@ namespace CGLib {
 		void Render(ID3D11DeviceContext* context, const Camera& camera) override;
 		void Shutdown() override;
 
-		virtual void Update(float deltaTime) override
-		{
-			if (selfRotationEnabled_)
-			{
-				selfRotationAngle_ += selfRotationSpeed_ * deltaTime;
-				UpdateWorldMatrix();
-			}
-		}
+		virtual void Update(float deltaTime) override;
 
 		void SetSelfRotationSpeed(float speed)
 		{

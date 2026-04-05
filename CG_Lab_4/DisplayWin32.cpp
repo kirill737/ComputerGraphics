@@ -64,6 +64,8 @@ namespace CGLib {
 		//ShowCursor(FALSE);                            // скрываем курсор
 		//ShowCursor(TRUE);                            // скрываем курсор
 
+
+
         if (!hWnd_) {
 			std::cout << "Failed to create window\n";
             return false;
@@ -72,6 +74,17 @@ namespace CGLib {
 		ShowWindow(hWnd_, SW_SHOW);
 		SetForegroundWindow(hWnd_);
 		SetFocus(hWnd_);
+        ShowCursor(FALSE);                            // скрываем курсор
+
+		RECT rect;
+		GetClientRect(hWnd_, &rect);
+
+		POINT center;
+		center.x = (rect.right - rect.left) / 2;
+		center.y = (rect.bottom - rect.top) / 2;
+
+		ClientToScreen(hWnd_, &center);
+		SetCursorPos(center.x, center.y);
 
 		RAWINPUTDEVICE Rid;
 		Rid.usUsagePage = 0x01;
@@ -133,18 +146,6 @@ namespace CGLib {
             if (input) input->ProcessKeyUp(static_cast<unsigned int>(wParam));
             return 0;
 
-			/*case WM_MOUSEMOVE:
-				if (input) {
-					POINT p;
-					GetCursorPos(&p);
-					ScreenToClient(hwnd, &p);
-					input->ProcessMouseMove(p.x, p.y);
-				}
-				return 0;*/
-
-		/*case WM_MOUSEWHEEL:
-			wheelDelta_ += GET_WHEEL_DELTA_WPARAM(wParam);
-			break;*/
 
 		case WM_INPUT:
 		{

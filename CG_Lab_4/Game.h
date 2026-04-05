@@ -7,6 +7,7 @@
 #include "SphereComponent.h"
 #include "BallComponent.h"
 #include "ModelComponent.h"
+#include "DirectLight.h"
 
 
 
@@ -22,19 +23,6 @@
 //using CGLib::InputDevice;
 using namespace CGLib;
 namespace game {
-
-	struct LightBufferData
-	{
-		DirectX::SimpleMath::Vector3 lightPos;
-		float ambientStrength;
-
-		DirectX::SimpleMath::Vector3 cameraPos;
-		float pad0 = 0.0f;
-
-		DirectX::SimpleMath::Vector3 lightColor;
-		float pad1 = 0.0f;
-	};
-
 
     class Game
     {
@@ -68,8 +56,8 @@ namespace game {
 
         std::vector<std::shared_ptr<GameComponent>> components_;
 
-        int screenWidth_ = 800;
-        int screenHeight_ = 400;
+        int screenWidth_ = 2048;
+        int screenHeight_ = 1152;
 
 
         size_t currentOrbitalTarget = 0;

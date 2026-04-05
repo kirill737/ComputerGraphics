@@ -34,7 +34,7 @@ float RandomFloat(const float& start, const float& end)
 {
 	static std::random_device rd;
 	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<float> dist(start, end);
+	std::uniform_real_distribution<float> dist(start, end);
 
 	return dist(gen);
 }
@@ -88,7 +88,8 @@ namespace game {
 			model->SetColor(Vector4(1, 1, 1, 1));
 
 			Vector3 pos = RandomVector3(-20.0f, 20.0f);
-			pos.y = 1.0f;
+			//pos.y = 1.0f;
+			pos.y = RandomFloat(1.0f, 5.0f);
 
 			model->SetPos(pos);
 			model->SetScale(Vector3(1, 1, 1));
@@ -170,7 +171,7 @@ namespace game {
 		playerBall_->SetPos(Vector3(0, 1, 0));
 		playerBall_->SetMoveSpeed(5.0f);
 
-		playerBall_->SetShininess(64.0f);
+		playerBall_->SetShininess(20.0f);
 		playerBall_->SetSpecStrength(1.0f);
 		playerBall_->SetSpecularColor({ 1.0f, 1.0f, 1.0f });
 
@@ -301,15 +302,15 @@ namespace game {
 		if (!camera_ || !context_ || !lightBuffer_)
 			return;
 
+
 		LightBufferData lightData = {};
-		lightData.lightPos = Vector3(50.0f, 50.0f, 50.0f);
+		lightData.lightDir = Vector3(1.0f, -1.0f, 0.5f);
+		lightData.lightDir.Normalize();
+
 		lightData.ambientStrength = 0.2f;
-
 		lightData.cameraPos = camera_->GetPos();
-		//lightData.specPower = 10.0f;
-
 		lightData.lightColor = Vector3(1.0f, 1.0f, 1.0f);
-		//lightData.specStrength = 0.8f; // Фоновая подсветка
+
 
 		context_->UpdateSubresource(lightBuffer_.Get(), 0, nullptr, &lightData, 0, 0);
 		context_->VSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());

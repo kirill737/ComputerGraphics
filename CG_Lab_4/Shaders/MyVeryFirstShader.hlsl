@@ -24,7 +24,7 @@ cbuffer Transform : register(b0)
 
 cbuffer LightData : register(b1)
 {
-    float3 lightPos;
+    float3 lightDir;
     float ambientStrength;
 
     float3 cameraPos;
@@ -66,7 +66,7 @@ PS_IN VSMain(VS_IN input)
 float4 PSMain(PS_IN input) : SV_Target
 {
     float3 N = normalize(input.worldNormal);
-    float3 L = normalize(lightPos - input.worldPos);
+    float3 L = normalize(-lightDir);
     float3 V = normalize(cameraPos - input.worldPos);
     float3 R = reflect(-L, N);
 

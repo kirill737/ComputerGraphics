@@ -70,6 +70,8 @@ namespace CGLib
 	private:
 		float screenPropotion_ = 1.0f;
 
+		float farPlane_ = 1000.0f;
+		float nearPlane_ = 0.1f;
 		Vector3 target_{ 0.0f, 0.0f, 0.0f };
 		std::shared_ptr<GameComponent> orbitalTarget_;
 

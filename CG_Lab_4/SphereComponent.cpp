@@ -165,6 +165,15 @@ namespace CGLib {
 		return true;
 	}
 
+	void SphereComponent::Update(float deltaTime)
+	{
+		if (selfRotationEnabled_)
+		{
+			selfRotationAngle_ += selfRotationSpeed_ * deltaTime;
+			UpdateWorldMatrix();
+		}
+	}
+
 	void SphereComponent::Render(ID3D11DeviceContext* context, const Camera& camera)
 	{
 		context->RSSetState(rasterizerState_.Get());

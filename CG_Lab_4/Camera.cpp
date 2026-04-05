@@ -165,8 +165,8 @@ namespace CGLib
 			projectionMatrix_ = Matrix::CreatePerspectiveFieldOfView(
 				fov_,
 				screenPropotion_,
-				0.1f,
-				100.0f
+				nearPlane_,
+				farPlane_
 			);
 		}
 		else
@@ -177,8 +177,8 @@ namespace CGLib
 			projectionMatrix_ = Matrix::CreateOrthographic(
 				orthoWidth,
 				orthoHeight,
-				0.1f,
-				100.0f
+				nearPlane_,
+				farPlane_
 			);
 		}
 	}
