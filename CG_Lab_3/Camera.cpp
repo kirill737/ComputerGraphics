@@ -146,7 +146,7 @@ namespace CGLib
 				fov_,
 				screenPropotion_,
 				0.1f,
-				100.0f
+				10000.0f
 			);
 		}
 		else
@@ -158,7 +158,7 @@ namespace CGLib
 				orthoWidth,
 				orthoHeight,
 				0.1f,
-				100.0f
+				10000.0f
 			);
 		}
 	}

@@ -130,11 +130,13 @@ namespace game {
 
 
 		for (int i = 0; i < planetsAmount; i++) {
-			auto planet = CreatePlanet({}, 5.0f + 1.2f * float(i), 0.65f, RandomColor(), sun, RandomFloat(0.1f, 3.0f), RandomVector3());
+			auto planet = CreatePlanet({}, 5.0f + 1.2f * float(i), 0.65f, RandomColor(), sun, RandomFloat(0.1f, 3.0f));
+			//auto planet = CreatePlanet({}, 5.0f + 1.2f * float(i), 0.65f, RandomColor(), sun, RandomFloat(0.1f, 3.0f), RandomVector3());
 
 			float dice = RandomFloat(0.0f, 1.0f);
 			if (RandomFloat(0.0f, 1.0f) >= 0.5) {
 				auto moon = CreatePlanet({}, 1.0f, 0.2f, RandomColor(), planet, RandomFloat(-2.0f, 2.0f), RandomVector3());
+				//auto moon = CreatePlanet({}, 1.0f, 0.2f, RandomColor(), planet, RandomFloat(-2.0f, 2.0f), Vector3::Up);
 				moon->SetSelfRotationAxis(RandomVector3());
 				moon->SetSelfRotationSpeed(RandomFloat(0.5f, 3.0f));
 
