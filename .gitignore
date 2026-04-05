@@ -11,6 +11,9 @@
 *.sln.docstates
 *.env
 
+# Rider settings
+*.idea
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
