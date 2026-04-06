@@ -150,6 +150,10 @@ namespace game {
 		auto ground = std::make_shared<CGLib::GroundComponent>(100.0f, 100.0f);
 		ground->SetColor(Vector4(1, 1, 1, 1));
 		ground->SetPos(Vector3(0, 0, 0));
+		//ground->SetSpecStrength(100.0f);
+		ground->SetSpecularColor({ 1.0f, 1.0f, 1.0f });
+		ground->SetSpecStrength(0.6f);
+		ground->SetShininess(64.0f);
 
 		if (!ground->Initialize(device_.Get(), context_.Get(), display_.GetHwnd()))
 		{
@@ -418,13 +422,6 @@ namespace game {
 		const float speed = 5.0f;
 		const float sensitivity = 0.0015f;
 
-		// WASD
-		/*if (input_.IsKeyPressed('W')) camera_->MoveForward(deltaTime, speed);
-		if (input_.IsKeyPressed('S')) camera_->MoveBackward(deltaTime, speed);
-		if (input_.IsKeyPressed('A')) camera_->MoveLeft(deltaTime, speed);
-		if (input_.IsKeyPressed('D')) camera_->MoveRight(deltaTime, speed);*/
-		/*if (input_.IsKeyPressed(VK_SPACE)) camera_->MoveUp(deltaTime, speed);
-		if (input_.IsKeyPressed(VK_SHIFT)) camera_->MoveDown(deltaTime, speed);*/
 
 		// Мышка
 		POINT mouseDelta = input_.GetMouseDelta();
@@ -559,20 +556,46 @@ namespace game {
 	}
 
 	// Свет
+
+	//void Game::UpdateLightBuffer()
+	//{
+	//	if (!camera_ || !context_ || !lightBuffer_)
+	//		return;
+	//
+	//	LightBufferData lightData = {};
+	//	//lightData.lightDir = Vector3(0.0f, -1.0f, 0.05f);
+	//	lightData.lightDir = GetLightDir();
+	//	lightData.lightDir.Normalize();
+	//
+	//	lightData.ambientStrength = 0.2f;
+	//	lightData.cameraPos = camera_->GetPos();
+	//	lightData.lightColor = Vector3(1.0f, 1.0f, 1.0f);
+	//
+	//	context_->UpdateSubresource(lightBuffer_.Get(), 0, nullptr, &lightData, 0, 0);
+	//	context_->VSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());
+	//	context_->PSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());
+	//}
+
 	void Game::UpdateLightBuffer()
 	{
 		if (!camera_ || !context_ || !lightBuffer_)
 			return;
 
+		lightAngle_ += 0.000f;
+
+		float radius = 1.0f;
+		float x = cosf(lightAngle_) * radius;
+		float z = sinf(lightAngle_) * radius;
+		float y = -1.0f;
 
 		LightBufferData lightData = {};
-		lightData.lightDir = Vector3(1.0f, -1.0f, 0.5f);
+		SetLightDir(Vector3(x, y, z));
+		lightData.lightDir = GetLightDir();
 		lightData.lightDir.Normalize();
 
 		lightData.ambientStrength = 0.2f;
 		lightData.cameraPos = camera_->GetPos();
 		lightData.lightColor = Vector3(1.0f, 1.0f, 1.0f);
-
 
 		context_->UpdateSubresource(lightBuffer_.Get(), 0, nullptr, &lightData, 0, 0);
 		context_->VSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());
@@ -583,7 +606,7 @@ namespace game {
 	// Тени
 	bool Game::InitializeShadowMap()
 	{
-		const UINT shadowSize = 2048;
+		const UINT shadowSize = 2048*2;
 
 		D3D11_TEXTURE2D_DESC texDesc = {};
 		texDesc.Width = shadowSize;
@@ -624,7 +647,8 @@ namespace game {
 
 	void Game::UpdateLightMatrices()
 	{
-		Vector3 lightDir = Vector3(1.0f, -1.0f, 0.5f);
+		//Vector3 lightDir = Vector3(1.0f, -1.0f, 0.5f);
+		Vector3 lightDir = GetLightDir();
 		lightDir.Normalize();
 
 		Vector3 sceneCenter = Vector3(0.0f, 0.0f, 0.0f);

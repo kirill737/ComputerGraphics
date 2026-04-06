@@ -43,6 +43,8 @@ namespace game {
         void UpdateLightMatrices();
         void UpdateShadowBuffer();
         void RenderShadowPass();
+        Vector3 GetLightDir() const { return lightDir_; };
+        void SetLightDir(const Vector3& newDir) { lightDir_ = newDir; };
 
     private:
 
@@ -67,7 +69,8 @@ namespace game {
 
 
         size_t currentOrbitalTarget = 0;
-        // FPS counter
+
+        // Фэпасы
         float totalTime_ = 0.0f;
         unsigned int frameCount_ = 0;
 
@@ -83,6 +86,8 @@ namespace game {
         // Свет
         Microsoft::WRL::ComPtr<ID3D11Buffer> lightBuffer_;
         Microsoft::WRL::ComPtr<ID3D11Buffer> shadowBuffer_;
+        float lightAngle_ = 0.0f;
+        Vector3 lightDir_ = Vector3(0.0f, -1.0f, 0.05f);
 
         // Тени
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> shadowMapTexture_;

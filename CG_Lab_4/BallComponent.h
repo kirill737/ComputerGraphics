@@ -51,7 +51,7 @@ namespace CGLib
 		float jumpSpeed_ = 8.0f;
 
 		int jumpCount_ = 0;
-		int maxJumps_ = 5;
+		int maxJumps_ = 2;
 
 		bool jumpRequested_ = false;
 		float prevSpeed_ = moveSpeed_;
