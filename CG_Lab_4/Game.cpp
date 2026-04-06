@@ -78,6 +78,8 @@ namespace game {
 		}
 		LOG("Shadow maps initialized");
 		
+		projectileLights_.reserve(MAX_PROJECTILE_LIGHTS);
+
 
 		camera_ = std::make_unique<CGLib::Camera>(float(screenWidth_), float(screenHeight_));
 		camera_->SetPos(Vector3(0, 8, -12));
@@ -172,6 +174,19 @@ namespace game {
 		LOG("Ground texture loaded");
 
 		components_.push_back(ground);
+
+		if (FAILED(DirectX::CreateWICTextureFromFile(
+			device_.Get(),
+			context_.Get(),
+			L"./Textures/Smile.png",
+			nullptr,
+			&shadowPatternSRV_)))
+		{
+			ERR("Shadow pattern texture load failed");
+			return false;
+		}
+		LOG("Shadow pattern texture loaded");
+
 
 		LOG("Creating player ball");
 
@@ -355,6 +370,7 @@ namespace game {
             prevTime = curTime;
 
 			UpdatePlayer(deltaTime);
+			UpdatePointLights(deltaTime);
 			for (auto& comp : components_) comp->Update(deltaTime);
 			UpdateKatamari();
 			UpdateFPS(deltaTime);
@@ -391,6 +407,7 @@ namespace game {
 		UpdateShadowBuffer();
 
 		context_->PSSetShaderResources(1, 1, shadowSRV_.GetAddressOf());
+		context_->PSSetShaderResources(2, 1, shadowPatternSRV_.GetAddressOf());
 		context_->PSSetSamplers(1, 1, shadowSamplerState_.GetAddressOf());
 		for (auto& comp : components_) {
 			comp->Render(context_.Get(), *camera_);
@@ -553,6 +570,21 @@ namespace game {
 		{
 			shiftPressed = false;
 		}
+
+		static bool ePressed = false;
+
+		if (input_.IsKeyPressed('E'))
+		{
+			if (!ePressed)
+			{
+				SpawnPointLight();
+				ePressed = true;
+			}
+		}
+		else
+		{
+			ePressed = false;
+		}
 	}
 
 	// Свет
@@ -581,21 +613,37 @@ namespace game {
 		if (!camera_ || !context_ || !lightBuffer_)
 			return;
 
-		lightAngle_ += 0.000f;
-
-		float radius = 1.0f;
-		float x = cosf(lightAngle_) * radius;
-		float z = sinf(lightAngle_) * radius;
-		float y = -1.0f;
-
 		LightBufferData lightData = {};
-		SetLightDir(Vector3(x, y, z));
 		lightData.lightDir = GetLightDir();
 		lightData.lightDir.Normalize();
 
 		lightData.ambientStrength = 0.2f;
 		lightData.cameraPos = camera_->GetPos();
 		lightData.lightColor = Vector3(1.0f, 1.0f, 1.0f);
+
+		for (int i = 0; i < MAX_PROJECTILE_LIGHTS; i++)
+		{
+			lightData.pointLights[i].pos = Vector3(0.0f, 0.0f, 0.0f);
+			lightData.pointLights[i].range = 0.0f;
+			lightData.pointLights[i].color = Vector3(0.0f, 0.0f, 0.0f);
+			lightData.pointLights[i].intensity = 0.0f;
+		}
+
+		int idx = 0;
+		for (const auto& p : projectileLights_)
+		{
+			if (!p.active)
+				continue;
+
+			if (idx >= MAX_PROJECTILE_LIGHTS)
+				break;
+
+			lightData.pointLights[idx].pos = p.pos;
+			lightData.pointLights[idx].range = p.range;
+			lightData.pointLights[idx].color = p.color;
+			lightData.pointLights[idx].intensity = p.intensity;
+			idx++;
+		}
 
 		context_->UpdateSubresource(lightBuffer_.Get(), 0, nullptr, &lightData, 0, 0);
 		context_->VSSetConstantBuffers(1, 1, lightBuffer_.GetAddressOf());
@@ -680,5 +728,59 @@ namespace game {
 		{
 			comp->RenderShadow(context_.Get(), lightViewProj_);
 		}
+	}
+
+
+	// Доп к 5
+	void Game::SpawnPointLight()
+	{
+		if (!playerBall_ || !camera_)
+			return;
+
+		ProjectileLight p;
+		p.active = true;
+		p.pos = playerBall_->GetPos() + Vector3(0.0f, 1.0f, 0.0f);
+		p.dir = camera_->GetFlatForward();
+
+		if (p.dir.LengthSquared() < 0.0001f)
+			p.dir = Vector3(0.0f, 0.0f, 1.0f);
+
+		p.dir.Normalize();
+		p.color = RandomVector3(0.2f, 1.0f);
+		p.speed = 20.0f;
+		p.range = 10.0f;
+		p.intensity = 2.5f;
+		p.life = 0.0f;
+		p.maxLife = 3.0f;
+
+		if ((int)projectileLights_.size() < MAX_PROJECTILE_LIGHTS)
+		{
+			projectileLights_.push_back(p);
+		}
+		else
+		{
+			projectileLights_[0] = p;
+		}
+	}
+
+	void Game::UpdatePointLights(float deltaTime)
+	{
+		for (auto& p : projectileLights_)
+		{
+			if (!p.active)
+				continue;
+
+			p.pos += p.dir * p.speed * deltaTime;
+			p.life += deltaTime;
+
+			if (p.life >= p.maxLife)
+				p.active = false;
+		}
+
+		projectileLights_.erase(
+			std::remove_if(projectileLights_.begin(), projectileLights_.end(),
+				[](const ProjectileLight& p) { return !p.active; }),
+			projectileLights_.end()
+		);
 	}
 }

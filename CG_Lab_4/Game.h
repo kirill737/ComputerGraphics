@@ -46,6 +46,10 @@ namespace game {
         Vector3 GetLightDir() const { return lightDir_; };
         void SetLightDir(const Vector3& newDir) { lightDir_ = newDir; };
 
+        // Доп к 5 
+		void UpdatePointLights(float deltaTime);
+		void SpawnPointLight();
+
     private:
 
         bool InitializeDirect3D();
@@ -87,7 +91,7 @@ namespace game {
         Microsoft::WRL::ComPtr<ID3D11Buffer> lightBuffer_;
         Microsoft::WRL::ComPtr<ID3D11Buffer> shadowBuffer_;
         float lightAngle_ = 0.0f;
-        Vector3 lightDir_ = Vector3(0.0f, -1.0f, 0.05f);
+        Vector3 lightDir_ = Vector3(1.0f, -1.0f, 0.5f);
 
         // Тени
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> shadowMapTexture_;
@@ -100,5 +104,23 @@ namespace game {
 		Matrix lightView_ = Matrix::Identity;
 		Matrix lightProj_ = Matrix::Identity;
 		Matrix lightViewProj_ = Matrix::Identity;
+
+        // Доп на свет
+		bool pointLightActive_ = false;
+		Vector3 pointLightPos_{ 0.0f, 0.0f, 0.0f };
+		Vector3 pointLightDir_{ 0.0f, 0.0f, 1.0f };
+		Vector3 pointLightColor_{ 1.0f, 0.2f, 0.2f };
+
+		float pointLightSpeed_ = 20.0f;
+		float pointLightRange_ = 10.0f;
+		float pointLightIntensity_ = 2.5f;
+		float pointLightLife_ = 0.0f;
+		float pointLightMaxLife_ = 2.0f;
+
+		//static constexpr int MAX_PROJECTILE_LIGHTS = 8;
+		std::vector<ProjectileLight> projectileLights_;
+
+        // Доп 6
+        Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowPatternSRV_;
     };
 }

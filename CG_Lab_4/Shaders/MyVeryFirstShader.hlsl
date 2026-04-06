@@ -1,3 +1,5 @@
+#define MAX_POINT_LIGHTS 8
+
 struct VS_IN
 {
     float3 pos : POSITION0;
@@ -14,6 +16,20 @@ struct PS_IN
     float3 worldPos : TEXCOORD1;
     float3 worldNormal : TEXCOORD2;
     float4 shadowPos : TEXCOORD3;
+};
+
+struct VS_OUT_SHADOW
+{
+    float4 pos : SV_POSITION;
+};
+
+struct PointLightData
+{
+    float3 pos;
+    float range;
+
+    float3 color;
+    float intensity;
 };
 
 cbuffer Transform : register(b0)
@@ -33,6 +49,8 @@ cbuffer LightData : register(b1)
 
     float3 lightColor;
     float pad1;
+
+    PointLightData pointLights[MAX_POINT_LIGHTS];
 };
 
 cbuffer MaterialData : register(b2)
@@ -51,14 +69,10 @@ cbuffer ShadowData : register(b3)
 
 Texture2D diffuseTexture : register(t0);
 Texture2D shadowMap : register(t1);
+Texture2D shadowPatternTexture : register(t2);
 
 SamplerState samLinear : register(s0);
 SamplerState shadowSampler : register(s1);
-
-struct VS_OUT_SHADOW
-{
-    float4 pos : SV_POSITION;
-};
 
 VS_OUT_SHADOW VSShadow(VS_IN input)
 {
@@ -72,7 +86,7 @@ VS_OUT_SHADOW VSShadow(VS_IN input)
 
 float4 PSShadow() : SV_Target
 {
-    return float4(1, 1, 1, 1);
+    return float4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 PS_IN VSMain(VS_IN input)
@@ -93,7 +107,7 @@ PS_IN VSMain(VS_IN input)
     return output;
 }
 
-float CalculateShadow(float4 shadowPos)
+float CalculateShadowRaw(float4 shadowPos)
 {
     float3 projCoords = shadowPos.xyz / shadowPos.w;
 
@@ -110,35 +124,73 @@ float CalculateShadow(float4 shadowPos)
 
     float bias = 0.001f;
 
-    return (currentDepth - bias <= closestDepth) ? 1.0f : 0.3f;
+    return (currentDepth - bias <= closestDepth) ? 1.0f : 0.0f;
 }
 
+float CalculatePatternedShadow(PS_IN input)
+{
+    float shadowRaw = CalculateShadowRaw(input.shadowPos);
 
-//float4 PSMain(PS_IN input) : SV_Target
-//{
-//    float shadow = CalculateShadow(input.shadowPos);
-//    return float4(shadow, shadow, shadow, 1.0f);
-//}
+    // Если пиксель не в тени — полный свет
+    if (shadowRaw > 0.5f)
+        return 1.0f;
+
+    // Узор привязан к миру/полу через worldPos.xz
+    float2 patternUV = input.worldPos.xz * 0.5f;
+
+    float pattern = shadowPatternTexture.Sample(samLinear, patternUV).r;
+
+    float patternedShadow = lerp(0.20f, 0.75f, pattern);
+
+    return patternedShadow;
+}
 
 float4 PSMain(PS_IN input) : SV_Target
 {
     float3 N = normalize(input.worldNormal);
-    float3 L = normalize(-lightDir);
     float3 V = normalize(cameraPos - input.worldPos);
+
+    float4 texColor = diffuseTexture.Sample(samLinear, input.tex);
+
+    //Directional light 
+    float3 L = normalize(-lightDir);
     float3 R = reflect(-L, N);
 
     float diff = max(dot(N, L), 0.0f);
     float spec = pow(max(dot(V, R), 0.0f), shininess);
 
-    float shadow = CalculateShadow(input.shadowPos);
+    float shadowFactor = CalculatePatternedShadow(input);
 
     float3 ambient = ambientStrength * lightColor;
-    float3 diffuse = diff * lightColor * shadow;
-    float3 specular = specStrength * spec * specularColor * lightColor * shadow;
+    float3 diffuse = diff * lightColor * shadowFactor;
+    float3 specular = specStrength * spec * specularColor * lightColor * shadowFactor;
 
-    float4 texColor = diffuseTexture.Sample(samLinear, input.tex);
+    // Point lights
+    float3 pointDiffuseSum = 0.0f;
+    float3 pointSpecularSum = 0.0f;
 
-    float3 finalLight = ambient + diffuse + specular;
+    [unroll]
+    for (int i = 0; i < MAX_POINT_LIGHTS; i++)
+    {
+        float3 toLight = pointLights[i].pos - input.worldPos;
+        float dist = length(toLight);
+
+        if (pointLights[i].intensity > 0.0f && dist < pointLights[i].range)
+        {
+            float3 LP = normalize(toLight);
+            float atten = 1.0f - saturate(dist / pointLights[i].range);
+
+            float pointDiff = max(dot(N, LP), 0.0f);
+
+            float3 pointR = reflect(-LP, N);
+            float pointSpec = pow(max(dot(V, pointR), 0.0f), shininess);
+
+            pointDiffuseSum += pointDiff * pointLights[i].color * atten * pointLights[i].intensity;
+            pointSpecularSum += specStrength * pointSpec * specularColor * pointLights[i].color * atten * pointLights[i].intensity;
+        }
+    }
+
+    float3 finalLight = ambient + diffuse + specular + pointDiffuseSum + pointSpecularSum;
     float3 finalColor = texColor.rgb * input.col.rgb * finalLight;
 
     return float4(finalColor, texColor.a * input.col.a);
